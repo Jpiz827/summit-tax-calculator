@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Security Claiming Calculator — Summit Tax Services</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0C0E14;
+            --dark: #1A1F2E;
+            --gold: #C8920A;
+            --gold-light: #F0B429;
+            --red: #C0392B;
+            --green: #166534;
+            --green-light: #22C55E;
+            --white: #FFFFFF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-500: #6B7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        .top-bar {
+            background: var(--navy);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .top-bar a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .top-bar a:hover { color: var(--gold-light); }
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--dark) 100%);
+            color: white;
+            padding: 40px 20px 32px;
+            text-align: center;
+        }
+        .header h1 {
+            font-family: 'Merriweather', serif;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .header p {
+            font-size: 1.05rem;
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 800px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .panel h2 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.3rem;
+            color: var(--navy);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+        .form-group .help {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        .btn {
+            display: inline-block;
+            background: var(--gold);
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+        .btn:hover { background: var(--gold-light); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        /* Results */
+        .results { display: none; }
+
+    /* Email Report Button */
+    .email-report-section {
+        display: none;
+        margin-top: 24px;
+        padding: 24px;
+        background: linear-gradient(135deg, #1a2744 0%, #243352 100%);
+        border: 2px solid #c9a84c;
+        border-radius: 12px;
+        text-align: center;
+    }
+    .email-report-section.active { display: block; }
+    .email-report-section h3 {
+        color: #c9a84c;
+        font-family: Georgia, serif;
+        font-size: 1.2rem;
+        margin: 0 0 8px;
+    }
+    .email-report-section p {
+        color: #f5f0e7;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin: 0 0 16px;
+    }
+    .email-report-section .email-input-row {
+        display: flex;
+        gap: 10px;
+        max-width: 460px;
+        margin: 0 auto;
+    }
+    .email-report-section input[type="email"] {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #3a4a66;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: #f5f0e7;
+        color: #1a2744;
+    }
+    .email-report-section .email-send-btn {
+        padding: 12px 24px;
+        background: #c9a84c;
+        color: #1a2744;
+        font-family: Arial, sans-serif;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.2s;
+    }
+    .email-report-section .email-send-btn:hover { background: #d4b65e; }
+    .email-report-section .email-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .email-report-section .email-status {
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: #27ae60;
+    }
+    .email-report-section .email-status.error { color: #e74c3c; }
+
+        .results.active { display: block; }
+        .highlight-box {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--dark) 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .highlight-box .big-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            font-family: 'Merriweather', serif;
+        }
+        .highlight-box .label {
+            font-size: 0.9rem;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 640px) {
+            .highlight-grid { grid-template-columns: 1fr; }
+        }
+        .highlight-card {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .highlight-card .number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--navy);
+        }
+        .highlight-card .number.red { color: var(--red); }
+        .highlight-card .number.green { color: var(--green); }
+        .highlight-card .desc {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+        #chart { margin-bottom: 24px; }
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        table th {
+            background: var(--navy);
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        table tr:nth-child(even) { background: var(--gray-50); }
+        table tr.optimal { background: #FEF3C7; font-weight: 600; }
+        
+        .disclaimer {
+            margin-top: 32px;
+            padding: 16px;
+            background: var(--gray-100);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/">← Back to Calculators</a>
+        <a href="https://taxesrx.com">Summit Tax Services</a>
+    </div>
+    
+    <div class="header">
+        <h1>📊 Social Security Claiming Calculator</h1>
+        <p>See your lifetime benefits at every claiming age — and find your optimal strategy.</p>
+    </div>
+    
+    <div class="container">
+        <div class="grid">
+            <div class="panel">
+                <h2>Your Information</h2>
+                <form id="ssForm">
+                    <div class="form-group">
+                        <label for="pia_monthly">Your Monthly Benefit at Full Retirement Age</label>
+                        <input type="number" id="pia_monthly" value="2500" min="0" step="1" placeholder="e.g., 2500">
+                        <div class="help">This is your PIA — the amount on your Social Security statement</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="birth_year">Your Birth Year</label>
+                        <input type="number" id="birth_year" value="1960" min="1920" max="2030" placeholder="e.g., 1960">
+                    </div>
+                    <div class="form-group">
+                        <label for="filing">Filing Status</label>
+                        <select id="filing">
+                            <option value="MFJ">Married Filing Jointly</option>
+                            <option value="Single">Single</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="life_expectancy">Life Expectancy (years)</label>
+                        <input type="number" id="life_expectancy" value="85" min="50" max="120" step="1">
+                        <div class="help">Used to calculate total lifetime benefits</div>
+                    </div>
+                    <div class="form-group" id="spouseGroup" style="display:none;">
+                        <label for="spouse_pia">Spouse's Monthly Benefit at FRA</label>
+                        <input type="number" id="spouse_pia" value="1500" min="0" step="1">
+                    </div>
+                    <div class="form-group" id="spouseBirthGroup" style="display:none;">
+                        <label for="spouse_birth_year">Spouse's Birth Year</label>
+                        <input type="number" id="spouse_birth_year" value="1962" min="1920" max="2030">
+                    </div>
+                    <button type="submit" class="btn" id="calcBtn">Calculate My Strategy</button>
+                </form>
+            </div>
+            
+            <div>
+                <div id="results" class="results">
+                    <div class="highlight-box" id="optimalBox">
+                        <div class="label">Optimal claiming age for maximum lifetime benefits:</div>
+                        <div class="big-number" id="optimalAge">—</div>
+                        <div class="label" id="optimalLifetime"></div>
+                    </div>
+                    
+                    <div class="highlight-grid">
+                        <div class="highlight-card">
+                            <div class="number" id="fraDisplay">—</div>
+                            <div class="desc">Your Full Retirement Age</div>
+                        </div>
+                        <div class="highlight-card">
+                            <div class="number red" id="claim62Loss">—</div>
+                            <div class="desc">Lifetime loss if you claim at 62</div>
+                        </div>
+                        <div class="highlight-card">
+                            <div class="number green" id="claim70Gain">—</div>
+                            <div class="desc">Lifetime gain if you claim at 70</div>
+                        </div>
+                    </div>
+                    
+                    <div id="chart"></div>
+                    
+                    <div class="panel" style="margin-top: 0;">
+                        <h2>Claiming Age Comparison</h2>
+                        <div class="table-container">
+                            <table id="resultsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Claim Age</th>
+                                        <th>Monthly Benefit</th>
+                                        <th>Annual Benefit</th>
+                                        <th>Change from FRA</th>
+                                        <th>Years Collecting</th>
+                                        <th>Lifetime Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="panel" style="margin-top: 16px;">
+                        <h2>⚡ The Go-Go Years Matter</h2>
+                        <p style="color: var(--gray-700); line-height: 1.7;">
+                            The breakeven analysis shows when total dollars equal out — but <strong>which years</strong> you receive those dollars matters just as much.
+                            Claiming at 62 means <strong>more money during your go-go years</strong> (65–75), when you can actually enjoy it.
+                            Claiming at 70 means a bigger check but <strong>zero income for 4–8 years</strong> — during the years you need it most.
+                        </p>
+                        <p style="color: var(--gray-700); line-height: 1.7; margin-top: 12px;">
+                            <strong>The right answer depends on YOUR situation.</strong> That's exactly what we cover in a personalized Strategy Session — 
+                            your health, your spouse, your other income, your tax torpedo exposure. 
+                            <a href="/" style="color: var(--gold); font-weight: 600;">Book your free session →</a>
+                        </p>
+                    </div>
+
+                    <!-- Email My Report Section -->
+                    <div id="emailReportSection" class="email-report-section">
+                        <h3>📧 Get Your Detailed Report</h3>
+                        <p>We'll email you a personalized 4-page analysis with your numbers, strategy recommendations, and next steps.</p>
+                        <input type="hidden" id="emailReportCalc" value="ss-calculator">
+                        <div class="email-input-row">
+                            <input type="email" id="emailReportInput" placeholder="your@email.com">
+                            <button id="emailSendBtn" class="email-send-btn" onclick="sendReportEmail()">SEND MY REPORT →</button>
+                        </div>
+                        <div id="emailStatus" class="email-status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="disclaimer">
+            <strong>Disclaimer:</strong> This calculator is for educational purposes only and does not constitute tax, legal, or financial advice. 
+            Social Security benefit amounts depend on personal factors including employment history, marital history, health status, and age at which benefits begin. 
+            Consult with a qualified professional for personalized guidance. © 2026 Summit Tax Services.
+        </div>
+    </div>
+
+    <script>
+        // --- Email My Report ---
+        let lastCalcInputs = {};
+        let lastCalcResults = {};
+        const CLIENT_ID = new URLSearchParams(window.location.search).get('c') || '';
+        
+        function showEmailReport() {
+            const section = document.getElementById('emailReportSection');
+            if (section) {
+                section.classList.add('active');
+                const emailInput = document.getElementById('emailReportInput');
+                if (emailInput && CLIENT_ID) {
+                    emailInput.placeholder = 'Loading your email...';
+                    fetch('/api/client/' + CLIENT_ID).then(r => r.json()).then(data => {
+                        if (data && data.email) {
+                            emailInput.value = data.email;
+                            emailInput.readOnly = true;
+                            emailInput.style.background = '#e8e0d0';
+                            emailInput.title = 'From your guide request';
+                        }
+                        emailInput.placeholder = 'your@email.com';
+                    }).catch(() => { emailInput.placeholder = 'your@email.com'; });
+                }
+            }
+        }
+        
+        async function sendReportEmail() {
+            const btn = document.getElementById('emailSendBtn');
+            const statusEl = document.getElementById('emailStatus');
+            const email = document.getElementById('emailReportInput').value.trim();
+            const calcName = document.getElementById('emailReportCalc').value;
+            
+            if (!email || !email.includes('@')) {
+                statusEl.textContent = 'Please enter a valid email address.';
+                statusEl.className = 'email-status error';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'SENDING...';
+            statusEl.textContent = '';
+            statusEl.className = 'email-status';
+            
+            try {
+                const resp = await fetch('/api/request-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: CLIENT_ID || null,
+                        email: email,
+                        calculator: calcName,
+                        inputs: lastCalcInputs,
+                        results: lastCalcResults
+                    })
+                });
+                const data = await resp.json();
+                
+                if (data.status === 'sent' || data.status === 'queued') {
+                    statusEl.textContent = '✅ Your detailed report has been sent to ' + email;
+                    statusEl.className = 'email-status';
+                    btn.textContent = 'SENT ✓';
+                } else {
+                    statusEl.textContent = data.message || 'Something went wrong. Please try again.';
+                    statusEl.className = 'email-status error';
+                    btn.disabled = false;
+                    btn.textContent = 'SEND MY REPORT →';
+                }
+            } catch (err) {
+                statusEl.textContent = 'Connection error. Please try again.';
+                statusEl.className = 'email-status error';
+                btn.disabled = false;
+                btn.textContent = 'SEND MY REPORT →';
+            }
+        }
+        
+        const form = document.getElementById('ssForm');
+        const resultsDiv = document.getElementById('results');
+        const filingSelect = document.getElementById('filing');
+        
+        filingSelect.addEventListener('change', function() {
+            const isMFJ = this.value === 'MFJ';
+            document.getElementById('spouseGroup').style.display = isMFJ ? 'block' : 'none';
+            document.getElementById('spouseBirthGroup').style.display = isMFJ ? 'block' : 'none';
+        });
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('calcBtn');
+            btn.disabled = true;
+            btn.textContent = 'Calculating...';
+            
+            try {
+                const response = await fetch('/api/ss-scenarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pia_monthly: parseFloat(document.getElementById('pia_monthly').value),
+                        birth_year: parseInt(document.getElementById('birth_year').value),
+                        filing: document.getElementById('filing').value,
+                        life_expectancy: parseInt(document.getElementById('life_expectancy').value),
+                        spouse_pia_monthly: parseFloat(document.getElementById('spouse_pia').value || 0),
+                        spouse_birth_year: parseInt(document.getElementById('spouse_birth_year').value || 1960),
+                    })
+                });
+                
+                // Store inputs for email report
+                lastCalcInputs = {
+                    pia_monthly: parseFloat(document.getElementById('pia_monthly').value),
+                    birth_year: parseInt(document.getElementById('birth_year').value),
+                    filing: document.getElementById('filing').value,
+                    life_expectancy: parseInt(document.getElementById('life_expectancy').value),
+                    spouse_pia_monthly: parseFloat(document.getElementById('spouse_pia').value || 0),
+                    spouse_birth_year: parseInt(document.getElementById('spouse_birth_year').value || 1960),
+                };
+                
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error('Server error ' + response.status + ': ' + errText.substring(0, 200));
+                }
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                alert('Error calculating: ' + err.message);
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Calculate My Strategy';
+            }
+        });
+        
+        function displayResults(data) {
+            resultsDiv.classList.add('active');
+            
+            // Store for email report
+            lastCalcResults = data;
+            showEmailReport();
+            
+            // Optimal
+            document.getElementById('optimalAge').textContent = `Age ${data.optimal_age}`;
+            document.getElementById('optimalLifetime').textContent = 
+                `Estimated lifetime benefits: $${data.optimal_lifetime.toLocaleString()}`;
+            
+            // FRA
+            document.getElementById('fraDisplay').textContent = data.fra_display;
+            
+            // Loss at 62 and gain at 70
+            const scenarios = data.scenarios.filter(s => !s.note);
+            const fraBenefit = scenarios.find(s => s.claim_age === Math.ceil(data.fra)) || scenarios.find(s => s.claim_age === 67);
+            const claim62 = scenarios.find(s => s.claim_age === 62);
+            const claim70 = scenarios.find(s => s.claim_age === 70);
+            
+            if (fraBenefit && claim62) {
+                const loss = fraBenefit.lifetime_benefit - claim62.lifetime_benefit;
+                document.getElementById('claim62Loss').textContent = 
+                    loss >= 0 ? `-$${loss.toLocaleString()}` : `+$${Math.abs(loss).toLocaleString()}`;
+            }
+            if (fraBenefit && claim70) {
+                const gain = claim70.lifetime_benefit - fraBenefit.lifetime_benefit;
+                document.getElementById('claim70Gain').textContent = 
+                    gain >= 0 ? `+$${gain.toLocaleString()}` : `-$${Math.abs(gain).toLocaleString()}`;
+            }
+            
+            // Chart
+            const ages = scenarios.map(s => s.claim_age);
+            const annualBenefits = scenarios.map(s => s.annual_benefit);
+            const lifetimeBenefits = scenarios.map(s => s.lifetime_benefit);
+            
+            Plotly.newPlot('chart', [
+                {
+                    x: ages,
+                    y: annualBenefits,
+                    name: 'Annual Benefit',
+                    type: 'bar',
+                    marker: { color: '#C8920A' },
+                    yaxis: 'y',
+                    hovertemplate: 'Age %{x}: $%{y:,.0f}/year<extra></extra>'
+                },
+                {
+                    x: ages,
+                    y: lifetimeBenefits,
+                    name: 'Lifetime Total',
+                    type: 'line',
+                    marker: { color: '#0C0E14', size: 8 },
+                    line: { width: 3 },
+                    yaxis: 'y2',
+                    hovertemplate: 'Age %{x}: $%{y:,.0f} lifetime<extra></extra>'
+                }
+            ], {
+                title: { text: 'Social Security Benefits by Claiming Age', font: { size: 16 } },
+                xaxis: { title: 'Claiming Age', dtick: 1 },
+                yaxis: { title: 'Annual Benefit ($)', side: 'left' },
+                yaxis2: { title: 'Lifetime Total ($)', overlaying: 'y', side: 'right', showgrid: false },
+                hovermode: 'x unified',
+                legend: { orientation: 'h', y: -0.15 },
+                margin: { t: 50, b: 60 },
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white',
+            }, { responsive: true });
+            
+            // Table
+            const tbody = document.querySelector('#resultsTable tbody');
+            tbody.innerHTML = '';
+            scenarios.forEach(s => {
+                const isOptimal = s.claim_age === data.optimal_age;
+                const isFRA = s.claim_age === Math.ceil(data.fra);
+                const row = document.createElement('tr');
+                if (isOptimal) row.classList.add('optimal');
+                const changeStr = s.reduction_or_increase >= 0 
+                    ? `+${s.reduction_or_increase}%` 
+                    : `${s.reduction_or_increase}%`;
+                row.innerHTML = `
+                    <td><strong>${s.claim_age}${isOptimal ? ' ⭐' : ''}${isFRA ? ' (FRA)' : ''}</strong></td>
+                    <td>$${s.monthly_benefit.toLocaleString()}</td>
+                    <td>$${s.annual_benefit.toLocaleString()}</td>
+                    <td>${changeStr}</td>
+                    <td>${s.years_collecting}</td>
+                    <td><strong>$${s.lifetime_benefit.toLocaleString()}</strong></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summit Tax Services — Retirement Tax Calculators</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0C0E14;
+            --dark: #1A1F2E;
+            --gold: #C8920A;
+            --gold-light: #F0B429;
+            --red: #C0392B;
+            --green: #166534;
+            --green-light: #22C55E;
+            --white: #FFFFFF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-500: #6B7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        .hero {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--dark) 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-family: 'Merriweather', serif;
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-top: -40px;
+        }
+        @media (max-width: 900px) {
+            .cards { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 640px) {
+            .cards { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.8rem; }
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 32px;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: var(--gray-900);
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        }
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        .card h2 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+            color: var(--navy);
+        }
+        .card p {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+            flex-grow: 1;
+        }
+        .card .cta {
+            display: inline-block;
+            background: var(--gold);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .card:hover .cta {
+            background: var(--gold-light);
+        }
+        .stats {
+            margin-top: 48px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            .stats { grid-template-columns: 1fr 1fr; }
+        }
+        .stat {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--red);
+            font-family: 'Merriweather', serif;
+        }
+        .stat-label {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+        footer {
+            text-align: center;
+            padding: 32px 20px;
+            color: var(--gray-500);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--gray-200);
+            margin-top: 48px;
+        }
+        footer a { color: var(--gold); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>Maximize Your Social Security</h1>
+        <p>Free calculators to help you understand the tax torpedo, optimize your claiming strategy, and see how Roth conversions could save you thousands.</p>
+    </div>
+    
+    <div class="container">
+        <div class="cards">
+            <a href="/ss-calculator" class="card">
+                <div class="card-icon">📊</div>
+                <h2>Social Security Claiming Calculator</h2>
+                <p>Compare claiming at every age from 62 to 70. See your breakeven point, lifetime benefits, and the real cost of waiting vs. claiming early.</p>
+                <span class="cta">Calculate Now →</span>
+            </a>
+            <a href="/torpedo-calculator" class="card">
+                <div class="card-icon">⚡</div>
+                <h2>Tax Torpedo Calculator</h2>
+                <p>Discover how much of your Social Security is being taxed — and how a Roth conversion could eliminate the torpedo and save you thousands per year.</p>
+                <span class="cta">Calculate Now →</span>
+            </a>
+            <a href="/capital-gains" class="card">
+                <div class="card-icon">📈</div>
+                <h2>Capital Gains Bump Zone</h2>
+                <p>Think your capital gains are taxed at 0% or 15%? Think again. See how selling stocks pushes more Social Security into taxable income — a hidden double tax.</p>
+                <span class="cta">Calculate Now →</span>
+            </a>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">85%</div>
+                <div class="stat-label">of your Social Security<br>can be taxable</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">40.7%</div>
+                <div class="stat-label">effective marginal rate<br>for some couples</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">27%</div>
+                <div class="stat-label">hidden tax on capital<br>gains in the bump zone</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">$100K+</div>
+                <div class="stat-label">left on the table by<br>wrong claiming age</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2026 Summit Tax Services. All rights reserved. | <a href="https://taxesrx.com">taxesrx.com</a> | <a href="https://myrothrx.com">myrothrx.com</a></p>
+        <p style="margin-top: 8px; font-size: 0.8rem;">These calculators are for educational purposes only and do not constitute tax, legal, or financial advice. Consult a qualified professional for personalized guidance.</p>
+    </footer>
+</body>
+</html>

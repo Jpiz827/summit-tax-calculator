@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capital Gains Bump Zone Calculator — Summit Tax Services</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  :root {
+    --navy: #0C0E14;
+    --dark: #1A1F2E;
+    --gold: #C8920A;
+    --gold-light: #F0B429;
+    --red: #C0392B;
+    --green: #166534;
+    --green-light: #22C55E;
+    --white: #FFFFFF;
+    --gray: #94A3B8;
+    --light-bg: #F8FAFC;
+    --card-bg: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--light-bg);
+    color: #1E293B;
+    line-height: 1.6;
+    font-size: 17px;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--navy), var(--dark));
+    color: var(--white);
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header h1 span { color: var(--gold-light); }
+  .header p { color: var(--gray); font-size: 16px; max-width: 700px; margin: 0 auto; }
+  .nav {
+    background: var(--dark);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .nav a {
+    color: var(--gray);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: all 0.2s;
+  }
+  .nav a:hover { color: var(--white); background: rgba(255,255,255,0.1); }
+  .nav a.active { color: var(--gold-light); background: rgba(200,146,10,0.15); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .alert-box {
+    background: #FEF3C7;
+    border-left: 4px solid var(--gold);
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-size: 15px;
+  }
+  .alert-box strong { color: #92400E; }
+  .alert-box.red {
+    background: #FEE2E2;
+    border-left-color: var(--red);
+  }
+  .alert-box.red strong { color: #991B1B; }
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    font-size: 20px;
+    color: var(--navy);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--gold-light);
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { margin-bottom: 8px; }
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 14px;
+    color: #475569;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 17px;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--navy);
+    border: none;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 16px;
+    transition: transform 0.1s;
+  }
+  .btn-primary:hover { transform: scale(1.02); }
+  .btn-primary:active { transform: scale(0.98); }
+  .results { display: none; }
+  .results.show { display: block; }
+  /* Email Report Button */
+  .email-report-section {
+    display: none;
+    margin-top: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #1a2744 0%, #243352 100%);
+    border: 2px solid #c9a84c;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .email-report-section.active { display: block; }
+  .email-report-section h3 { color: #c9a84c; font-family: Georgia, serif; font-size: 1.2rem; margin: 0 0 8px; }
+  .email-report-section p { color: #f5f0e7; font-size: 0.9rem; line-height: 1.6; margin: 0 0 16px; }
+  .email-report-section .email-input-row { display: flex; gap: 10px; max-width: 460px; margin: 0 auto; }
+  .email-report-section input[type="email"] { flex: 1; padding: 12px 16px; border: 2px solid #3a4a66; border-radius: 8px; font-size: 0.95rem; background: #f5f0e7; color: #1a2744; }
+  .email-report-section .email-send-btn { padding: 12px 24px; background: #c9a84c; color: #1a2744; font-family: Arial, sans-serif; font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+  .email-report-section .email-send-btn:hover { background: #d4b65e; }
+  .email-report-section .email-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .email-report-section .email-status { margin-top: 10px; font-size: 0.85rem; color: #27ae60; }
+  .email-report-section .email-status.error { color: #e74c3c; }
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 600px) { .comparison-grid { grid-template-columns: 1fr; } }
+  .comparison-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .comparison-card h3 {
+    font-size: 16px;
+    color: var(--gray);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .comparison-card.before { border-top: 4px solid var(--green); }
+  .comparison-card.after { border-top: 4px solid var(--red); }
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 15px;
+  }
+  .metric:last-child { border-bottom: none; }
+  .metric .label { color: #64748B; }
+  .metric .value { font-weight: 700; color: var(--navy); }
+  .metric .value.red { color: var(--red); }
+  .metric .value.green { color: var(--green); }
+  .bump-zone-highlight {
+    background: linear-gradient(135deg, #FEF3C7, #FEE2E2);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .bump-zone-highlight .big-number {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--red);
+    line-height: 1;
+  }
+  .bump-zone-highlight .label {
+    font-size: 14px;
+    color: #92400E;
+    margin-top: 8px;
+  }
+  .bump-zone-highlight .sub {
+    font-size: 16px;
+    color: #475569;
+    margin-top: 12px;
+  }
+  .chart-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .insight-box {
+    background: #EFF6FF;
+    border-left: 4px solid #3B82F6;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-size: 15px;
+  }
+  .insight-box h3 { color: #1E40AF; margin-bottom: 8px; font-size: 17px; }
+  .strategy-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 700px) { .strategy-cards { grid-template-columns: 1fr; } }
+  .strategy-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-top: 4px solid var(--gold);
+  }
+  .strategy-card h4 { color: var(--navy); margin-bottom: 8px; font-size: 16px; }
+  .strategy-card p { color: #475569; font-size: 14px; line-height: 1.5; }
+  .cta-box {
+    background: linear-gradient(135deg, var(--navy), var(--dark));
+    color: var(--white);
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    margin-top: 32px;
+  }
+  .cta-box h3 { font-size: 24px; margin-bottom: 12px; }
+  .cta-box p { color: var(--gray); margin-bottom: 20px; font-size: 16px; }
+  .cta-box .btn-primary { max-width: 400px; margin: 0 auto; }
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--gray);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Capital Gains <span>Bump Zone</span> Calculator</h1>
+  <p>See how selling stocks or real estate can trigger a hidden "double tax" — your capital gains push more Social Security into taxable income, costing you far more than you think.</p>
+</div>
+
+<div class="nav">
+  <a href="/">Home</a>
+  <a href="/ss-calculator">SS Claiming</a>
+  <a href="/torpedo-calculator">Tax Torpedo</a>
+  <a href="/capital-gains" class="active">CG Bump Zone</a>
+</div>
+
+<div class="container">
+
+  <div class="alert-box red">
+    <strong>⚠ The Hidden Tax Trap:</strong> You think your capital gains are taxed at 0% or 15%? Think again. When capital gains push more of your Social Security into taxable income, the <em>effective</em> rate on those gains can be 2–3× higher than the nominal rate. This calculator reveals the real cost.
+  </div>
+
+  <div class="card">
+    <h2>Your Retirement Numbers</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Annual Social Security (combined if married)</label>
+        <input type="number" id="ss_benefit" value="48000" step="1" min="0">
+      </div>
+      <div class="form-group">
+        <label>Other Retirement Income (pensions, IRA distributions, etc.)</label>
+        <input type="number" id="other_income" value="40000" step="1" min="0">
+      </div>
+      <div class="form-group">
+        <label>Capital Gain You're Considering</label>
+        <input type="number" id="capital_gain" value="50000" step="1" min="0">
+      </div>
+      <div class="form-group">
+        <label>Tax-Exempt Interest (muni bonds)</label>
+        <input type="number" id="tax_exempt" value="0" step="1" min="0">
+      </div>
+      <div class="form-group">
+        <label>Filing Status</label>
+        <select id="filing">
+          <option value="MFJ">Married Filing Jointly</option>
+          <option value="Single">Single</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <div style="padding-top:28px; color:#64748B; font-size:14px;">All figures are annual</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="calculate()">Reveal the Real Cost →</button>
+  </div>
+
+  <div id="results" class="results">
+
+    <div class="bump-zone-highlight" id="bump-highlight">
+      <div class="label">YOUR EFFECTIVE CAPITAL GAINS RATE</div>
+      <div class="big-number" id="effective-rate">—</div>
+      <div class="sub" id="bump-explanation"></div>
+    </div>
+
+    <div class="comparison-grid">
+      <div class="comparison-card before">
+        <h3>✅ Before the Capital Gain</h3>
+        <div id="before-metrics"></div>
+      </div>
+      <div class="comparison-card after">
+        <h3>❌ After the Capital Gain</h3>
+        <div id="after-metrics"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>The Bump Zone Chart</h2>
+      <p style="color:#64748B; margin-bottom:16px; font-size:15px;">See how the effective rate on capital gains spikes as the gain increases — the "bump zones" where your real tax rate jumps far above the nominal rate.</p>
+      <div class="chart-container">
+        <div id="bump-chart"></div>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <h3>💡 Why This Happens</h3>
+      <p>Capital gains are added to your <strong>Adjusted Gross Income (AGI)</strong>. AGI determines how much of your Social Security is taxable — not through a deduction, but through the <strong>provisional income</strong> formula. When a capital gain pushes your provisional income above $44,000 (MFJ) or $34,000 (single), up to 85¢ of every dollar of SS becomes taxable. The extra SS tax is the "bump zone" penalty — a hidden second layer of tax on your gains.</p>
+    </div>
+
+    <div class="strategy-cards">
+      <div class="strategy-card">
+        <h4>🔄 Spread the Gain</h4>
+        <p>Realize large gains over 2–3 years instead of all at once. This can keep you below the 85% SS threshold each year, saving thousands in bump-zone taxes.</p>
+      </div>
+      <div class="strategy-card">
+        <h4>🏠 Harvest Losses</h4>
+        <p>Sell losing investments to offset gains. Tax-loss harvesting reduces the net gain, potentially keeping you below the bump zone entirely.</p>
+      </div>
+      <div class="strategy-card">
+        <h4>📦 Roth Conversion First</h4>
+        <p>Do Roth conversions in low-income years before selling assets. Lower RMDs = lower AGI = more room for capital gains before hitting the bump zone.</p>
+      </div>
+    </div>
+
+    <!-- Email My Report Section -->
+    <div id="emailReportSection" class="email-report-section">
+        <h3>📧 Get Your Detailed Report</h3>
+        <p>We'll email you a personalized 4-page analysis with your numbers, strategy recommendations, and next steps.</p>
+        <input type="hidden" id="emailReportCalc" value="capital-gains">
+        <div class="email-input-row">
+            <input type="email" id="emailReportInput" placeholder="your@email.com">
+            <button id="emailSendBtn" class="email-send-btn" onclick="sendReportEmail()">SEND MY REPORT →</button>
+        </div>
+        <div id="emailStatus" class="email-status"></div>
+    </div>
+
+    <div class="cta-box">
+      <h3>Don't Let the Bump Zone Surprise You</h3>
+      <p>A capital gains sale you think will cost 0% or 15% could cost you 9%, 18%, or even 27%+ in combined federal taxes. Get a personalized strategy session to protect your retirement income.</p>
+      <button class="btn-primary" onclick="window.location.href='/torpedo-calculator'">See the Full Tax Torpedo →</button>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  &copy; 2026 Summit Tax Services — Capital Gains Bump Zone Calculator<br>
+  <small>For educational purposes. Consult a tax professional for personal advice.</small>
+</footer>
+
+<script>
+// --- Email My Report ---
+let lastCalcInputs = {};
+let lastCalcResults = {};
+const CLIENT_ID = new URLSearchParams(window.location.search).get('c') || '';
+
+function showEmailReport() {
+    const section = document.getElementById('emailReportSection');
+    if (section) {
+        section.classList.add('active');
+        const emailInput = document.getElementById('emailReportInput');
+        if (emailInput && CLIENT_ID) {
+            emailInput.placeholder = 'Loading your email...';
+            fetch('/api/client/' + CLIENT_ID).then(r => r.json()).then(data => {
+                if (data && data.email) {
+                    emailInput.value = data.email;
+                    emailInput.readOnly = true;
+                    emailInput.style.background = '#e8e0d0';
+                    emailInput.title = 'From your guide request';
+                }
+                emailInput.placeholder = 'your@email.com';
+            }).catch(() => { emailInput.placeholder = 'your@email.com'; });
+        }
+    }
+}
+
+async function sendReportEmail() {
+    const btn = document.getElementById('emailSendBtn');
+    const statusEl = document.getElementById('emailStatus');
+    const email = document.getElementById('emailReportInput').value.trim();
+    const calcName = document.getElementById('emailReportCalc').value;
+    if (!email || !email.includes('@')) {
+        statusEl.textContent = 'Please enter a valid email address.';
+        statusEl.className = 'email-status error';
+        return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'SENDING...';
+    statusEl.textContent = '';
+    statusEl.className = 'email-status';
+    try {
+        const resp = await fetch('/api/request-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                client_id: CLIENT_ID || null,
+                email: email,
+                calculator: calcName,
+                inputs: lastCalcInputs,
+                results: lastCalcResults
+            })
+        });
+        const data = await resp.json();
+        if (data.status === 'sent' || data.status === 'queued') {
+            statusEl.textContent = '✅ Your detailed report has been sent to ' + email;
+            statusEl.className = 'email-status';
+            btn.textContent = 'SENT ✓';
+        } else {
+            statusEl.textContent = data.message || 'Something went wrong. Please try again.';
+            statusEl.className = 'email-status error';
+            btn.disabled = false;
+            btn.textContent = 'SEND MY REPORT →';
+        }
+    } catch (err) {
+        statusEl.textContent = 'Connection error. Please try again.';
+        statusEl.className = 'email-status error';
+        btn.disabled = false;
+        btn.textContent = 'SEND MY REPORT →';
+    }
+}
+
+function formatMoney(n) {
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function calculate() {
+  const data = {
+    ss_benefit_monthly: parseFloat(document.getElementById('ss_benefit').value) / 12,
+    other_income: parseFloat(document.getElementById('other_income').value),
+    capital_gain: parseFloat(document.getElementById('capital_gain').value),
+    filing: document.getElementById('filing').value,
+    tax_exempt_interest: parseFloat(document.getElementById('tax_exempt').value),
+  };
+  // We send annual SS directly
+  data.ss_benefit_annual = parseFloat(document.getElementById('ss_benefit').value);
+  delete data.ss_benefit_monthly;
+  lastCalcInputs = {
+    ss_benefit_annual: data.ss_benefit_annual,
+    other_income: data.other_income,
+    capital_gain: data.capital_gain,
+    filing: data.filing,
+    tax_exempt_interest: data.tax_exempt_interest,
+  };
+
+  fetch('/api/capital-gains', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  })
+  .then(r => {
+    if (!r.ok) throw new Error('Server error ' + r.status);
+    return r.json();
+  })
+  .then(result => {
+    document.getElementById('results').classList.add('show');
+    lastCalcResults = result;
+    showEmailReport();
+
+    // Big number highlight
+    document.getElementById('effective-rate').textContent = result.effective_cg_rate + '%';
+    const nominal = result.nominal_cg_rate;
+    const bump = result.bump_zone_penalty;
+    let explanation = `Nominal rate: ${nominal}%. Bump zone penalty: +${bump}% hidden tax due to Social Security cascading.`;
+    if (bump > 10) {
+      explanation += ' This is a SEVERE bump zone — get professional help before selling.';
+    } else if (bump > 3) {
+      explanation += ' A moderate bump zone — consider spreading the gain.';
+    }
+    document.getElementById('bump-explanation').textContent = explanation;
+
+    // Before metrics
+    const beforeHTML = `
+      <div class="metric"><span class="label">AGI</span><span class="value">${formatMoney(result.agi_before)}</span></div>
+      <div class="metric"><span class="label">Provisional Income</span><span class="value">${formatMoney(result.pi_before)}</span></div>
+      <div class="metric"><span class="label">SS Taxable</span><span class="value">${formatMoney(result.ss_taxable_before)} (${result.ss_pct_before}%)</span></div>
+      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.total_income_before)}</span></div>
+      <div class="metric"><span class="label">Federal Tax</span><span class="value">${formatMoney(result.fed_tax_before)}</span></div>
+      <div class="metric"><span class="label">Effective Rate</span><span class="value">${result.effective_rate_before}%</span></div>
+    `;
+    document.getElementById('before-metrics').innerHTML = beforeHTML;
+
+    // After metrics
+    const afterHTML = `
+      <div class="metric"><span class="label">AGI</span><span class="value red">${formatMoney(result.agi_after)}</span></div>
+      <div class="metric"><span class="label">Provisional Income</span><span class="value red">${formatMoney(result.pi_after)}</span></div>
+      <div class="metric"><span class="label">SS Taxable</span><span class="value red">${formatMoney(result.ss_taxable_after)} (${result.ss_pct_after}%)</span></div>
+      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.total_income_after)}</span></div>
+      <div class="metric"><span class="label">Federal Tax</span><span class="value red">${formatMoney(result.fed_tax_after)}</span></div>
+      <div class="metric"><span class="label">Tax Increase</span><span class="value red">+${formatMoney(result.tax_increase)}</span></div>
+      <div class="metric"><span class="label">Extra SS Taxed</span><span class="value red">+${formatMoney(result.additional_ss_taxable)}</span></div>
+    `;
+    document.getElementById('after-metrics').innerHTML = afterHTML;
+
+    // Render chart
+    renderChart(data);
+
+    // Scroll to results
+    document.getElementById('results').scrollIntoView({behavior: 'smooth'});
+  });
+}
+
+function renderChart(inputData) {
+  // Generate chart data by requesting from API
+  fetch('/api/cg-bump-chart', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      ss_benefit_annual: inputData.ss_benefit_annual,
+      other_income: inputData.other_income,
+      filing: inputData.filing,
+      tax_exempt_interest: inputData.tax_exempt_interest,
+    }),
+  })
+  .then(r => {
+    if (!r.ok) throw new Error('Chart error ' + r.status);
+    return r.json();
+  })
+  .then(data => {
+    const gains = data.chart_data.map(d => d.capital_gain);
+    const effectiveRates = data.chart_data.map(d => d.effective_rate);
+    const nominalRates = data.chart_data.map(d => d.nominal_rate);
+
+    const trace1 = {
+      x: gains,
+      y: effectiveRates,
+      name: 'Effective Rate (with SS cascading)',
+      type: 'scatter',
+      mode: 'lines',
+      line: {color: '#C0392B', width: 3},
+      fill: 'tozeroy',
+      fillcolor: 'rgba(192,57,43,0.1)',
+    };
+    const trace2 = {
+      x: gains,
+      y: nominalRates,
+      name: 'Nominal CG Rate',
+      type: 'scatter',
+      mode: 'lines',
+      line: {color: '#94A3B8', width: 2, dash: 'dash'},
+    };
+
+    const layout = {
+      title: 'The Capital Gains Bump Zone: Your Real Tax Rate',
+      xaxis: {title: 'Capital Gain Amount', tickprefix: '$', tickformat: ',.0f'},
+      yaxis: {title: 'Effective Tax Rate (%)', ticksuffix: '%'},
+      legend: {orientation: 'h', y: -0.15},
+      margin: {t: 40, b: 60, l: 60, r: 20},
+      paper_bgcolor: 'white',
+      plot_bgcolor: '#F8FAFC',
+      font: {size: 14, color: '#334155'},
+      annotations: [{
+        x: gains[Math.floor(gains.length/2)],
+        y: effectiveRates[Math.floor(effectiveRates.length/2)],
+        text: '← The BUMP ZONE: Your real rate',
+        showarrow: false,
+        font: {color: '#C0392B', size: 12},
+        yshift: 15,
+      }],
+    };
+
+    Plotly.newPlot('bump-chart', [trace1, trace2], layout, {responsive: true});
+  });
+}
+</script>
+
+</body>
+</html>

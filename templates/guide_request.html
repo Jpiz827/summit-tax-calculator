@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Your Free Social Security Guide — Summit Tax Services</title>
+    <meta name="description" content="The Maximizer's Guide to Social Security: Discover how 96% of retirees leave money on the table — and how to make sure you're not one of them.">
+    <meta property="og:title" content="Free Social Security Maximization Guide">
+    <meta property="og:description" content="Discover the tax torpedo, the widow tax hit, and the Roth conversion that un-taxes your Social Security.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://taxesrx.com/maxss">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0C0E14; color: #f5f0e7; }
+        
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #0C0E14 0%, #1a2744 40%, #243352 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .container {
+            max-width: 680px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: rgba(201,168,76,0.15);
+            border: 1px solid rgba(201,168,76,0.4);
+            color: #c9a84c;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 2.4rem;
+            line-height: 1.15;
+            color: #f5f0e7;
+            margin-bottom: 16px;
+        }
+        h1 .gold { color: #c9a84c; }
+        
+        .subtitle {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #a0aab8;
+            margin-bottom: 28px;
+        }
+        
+        .bullets {
+            margin-bottom: 32px;
+            padding: 0;
+            list-style: none;
+        }
+        .bullets li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #c8cdd6;
+            margin-bottom: 12px;
+        }
+        .bullets li .icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            background: rgba(201,168,76,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            margin-top: 2px;
+        }
+        
+        .form-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(201,168,76,0.3);
+            border-radius: 16px;
+            padding: 32px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .form-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.3rem;
+            color: #f5f0e7;
+            margin-bottom: 4px;
+        }
+        .form-subtitle {
+            font-size: 0.85rem;
+            color: #7a8499;
+            margin-bottom: 24px;
+        }
+        
+        .form-row {
+            margin-bottom: 16px;
+        }
+        .form-row label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #a0aab8;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .form-row input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.07);
+            border: 2px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            font-size: 1rem;
+            color: #f5f0e7;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .form-row input:focus {
+            outline: none;
+            border-color: #c9a84c;
+            background: rgba(255,255,255,0.1);
+        }
+        .form-row input::placeholder { color: #5a6378; }
+        .form-row .optional {
+            font-size: 0.7rem;
+            color: #5a6378;
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #c9a84c, #d4b65e);
+            color: #1a2744;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            margin-top: 8px;
+        }
+        .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
+        .submit-btn:active { transform: translateY(0); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        .form-footer {
+            margin-top: 16px;
+            font-size: 0.75rem;
+            color: #5a6378;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .form-footer a { color: #c9a84c; text-decoration: none; }
+        
+        .error-msg {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: none;
+        }
+        .error-msg.show { display: block; }
+        
+        .success-card {
+            display: none;
+            text-align: center;
+            padding: 40px 24px;
+        }
+        .success-card.active { display: block; }
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(39,174,96,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+        }
+        .success-card h2 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.5rem;
+            color: #f5f0e7;
+            margin-bottom: 12px;
+        }
+        .success-card p {
+            font-size: 0.95rem;
+            color: #a0aab8;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+        .success-card .calc-links {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .success-card .calc-link {
+            display: block;
+            padding: 16px 20px;
+            background: rgba(201,168,76,0.1);
+            border: 1px solid rgba(201,168,76,0.3);
+            border-radius: 10px;
+            color: #c9a84c;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .success-card .calc-link:hover { background: rgba(201,168,76,0.2); }
+        .success-card .calc-link .calc-desc {
+            font-size: 0.78rem;
+            font-weight: 400;
+            color: #7a8499;
+            margin-top: 4px;
+        }
+        
+        .social-proof {
+            margin-top: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: #7a8499;
+        }
+        .avatars {
+            display: flex;
+        }
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #1a2744;
+            margin-right: -8px;
+            background: #2a3650;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            color: #c9a84c;
+            font-weight: 700;
+        }
+        
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .form-card { padding: 24px 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="container">
+            <div class="badge">✅ 2025 Tax Update Included</div>
+            
+            <h1>The <span class="gold">Maximizer's Guide</span> to Social Security</h1>
+            
+            <p class="subtitle">Inside: the tax torpedo that eats up to 85% of your benefits, the widow tax hit that takes more from less, and the Roth conversion that un-taxes your Social Security.</p>
+            
+            <ul class="bullets">
+                <li>
+                    <span class="icon">⚡</span>
+                    <span>Why <strong>96% of retirees</strong> leave money on the table — and the exact age to claim</span>
+                </li>
+                <li>
+                    <span class="icon">🛡️</span>
+                    <span>How your <strong>own savings tax your Social Security</strong> — the provisional income trap no one explains</span>
+                </li>
+                <li>
+                    <span class="icon">💰</span>
+                    <span>The <strong>Roth conversion</strong> that eliminates RMDs and un-taxes your Social Security forever</span>
+                </li>
+                <li>
+                    <span class="icon">📊</span>
+                    <span><strong>3 free calculators</strong> included — run your own numbers instantly, no email required</span>
+                </li>
+            </ul>
+            
+            <div id="formSection" class="form-card">
+                <div class="form-title">Get Your Free Guide</div>
+                <div class="form-subtitle">Enter your first name and email. We'll send your personalized copy immediately.</div>
+                
+                <form id="guideForm">
+                    <div class="form-row">
+                        <label>First Name</label>
+                        <input type="text" id="firstName" placeholder="Your first name" required autocomplete="given-name">
+                    </div>
+                    <div class="form-row">
+                        <label>Email</label>
+                        <input type="email" id="email" placeholder="your@email.com" required autocomplete="email">
+                    </div>
+                    <div class="form-row">
+                        <label>Phone <span class="optional">(optional)</span></label>
+                        <input type="tel" id="phone" placeholder="(555) 123-4567" autocomplete="tel">
+                    </div>
+                    <div id="formError" class="error-msg"></div>
+                    <button type="submit" class="submit-btn" id="submitBtn">SEND MY FREE GUIDE →</button>
+                </form>
+                
+                <div class="form-footer">
+                    Your guide is personalized with your name. We'll never share your info. <a href="#">Privacy Policy</a>
+                </div>
+            </div>
+            
+            <div id="successSection" class="success-card">
+                <div class="success-icon">✅</div>
+                <h2>Your Guide Is On Its Way!</h2>
+                <p>Check your inbox for a personalized copy of <em>The Maximizer's Guide to Social Security</em>.</p>
+                <p>While you wait, try one of our free calculators — no sign-up required:</p>
+                
+                <div class="calc-links" id="calcLinks">
+                    <!-- Populated by JS with ?c= tracking -->
+                </div>
+            </div>
+            
+            <div class="social-proof">
+                <div class="avatars">
+                    <div class="avatar">J</div>
+                    <div class="avatar">M</div>
+                    <div class="avatar">R</div>
+                    <div class="avatar">S</div>
+                </div>
+                <span>Join thousands who've already requested the guide</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('guideForm');
+        const formSection = document.getElementById('formSection');
+        const successSection = document.getElementById('successSection');
+        const formError = document.getElementById('formError');
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const btn = document.getElementById('submitBtn');
+            
+            if (!firstName || firstName.length < 1) {
+                formError.textContent = 'Please enter your first name.';
+                formError.classList.add('show');
+                return;
+            }
+            
+            if (!email || !email.includes('@')) {
+                formError.textContent = 'Please enter a valid email address.';
+                formError.classList.add('show');
+                return;
+            }
+            
+            formError.classList.remove('show');
+            btn.disabled = true;
+            btn.textContent = 'SENDING...';
+            
+            try {
+                const resp = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ first_name: firstName, email: email, phone: phone })
+                });
+                
+                const data = await resp.json();
+                
+                if (resp.ok && data.client_id) {
+                    // Show success
+                    formSection.style.display = 'none';
+                    successSection.classList.add('active');
+                    
+                    // Build calculator links with tracking
+                    const clientId = data.client_id;
+                    const calcLinksDiv = document.getElementById('calcLinks');
+                    const calcs = [
+                        { url: '/ss-calculator?c=' + clientId, name: '📊 Social Security Claiming Calculator', desc: 'Compare claiming ages 62-70 and find your optimal strategy' },
+                        { url: '/torpedo-calculator?c=' + clientId, name: '🛡️ Tax Torpedo Calculator', desc: 'See how much of your Social Security is taxable — and how to reduce it' },
+                        { url: '/capital-gains?c=' + clientId, name: '💰 Capital Gains Bump Zone Calculator', desc: 'Discover your real tax rate on capital gains when Social Security is involved' },
+                    ];
+                    calcLinksDiv.innerHTML = calcs.map(c => 
+                        '<a href="' + c.url + '" class="calc-link">' + c.name + '<div class="calc-desc">' + c.desc + '</div></a>'
+                    ).join('');
+                } else {
+                    formError.textContent = data.error || 'Something went wrong. Please try again.';
+                    formError.classList.add('show');
+                    btn.disabled = false;
+                    btn.textContent = 'SEND MY FREE GUIDE →';
+                }
+            } catch (err) {
+                formError.textContent = 'Connection error. Please try again.';
+                formError.classList.add('show');
+                btn.disabled = false;
+                btn.textContent = 'SEND MY FREE GUIDE →';
+            }
+        });
+    </script>
+</body>
+</html>
