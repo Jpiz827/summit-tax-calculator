@@ -106,6 +106,12 @@ def irmaa():
     return render_template('irmaa.html', client_id=client_id)
 
 
+@app.route('/rothrx')
+def rothrx():
+    """RothRx Blueprint Calculator (self-contained)."""
+    return render_template('rothrx.html')
+
+
 # ─── Client Registration & Tracking Routes ───────────────────────────
 
 @app.route('/register', methods=['POST'])

@@ -1,0 +1,3152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RothRx Blueprint Calculator v5</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0d1f3c; --navy-mid: #1a3560; --gold: #c9a84c; --gold-light: #e8c97a;
+  --red: #8b1a1a; --red-light: #c42b2b; --green: #1a4a2e; --green-light: #2d7a4f;
+  --cream: #faf8f4; --gray-light: #f2efe8; --gray-mid: #c8c4b8;
+  --text-dark: #0d1f3c; --text-mid: #3d4f6e; --text-light: #6b7a94;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Sans 3', sans-serif; background: #e8e4db; min-height: 100vh; }
+
+/* ── TOP NAV ── */
+.top-nav { background: var(--navy); display: flex; align-items: center; position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 20px rgba(0,0,0,0.3); }
+.brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: white; padding: 0 24px; border-right: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
+.brand em { color: var(--gold); font-style: normal; }
+.nav-tabs { display: flex; }
+.nav-tab { font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; padding: 16px 22px; border: none; background: transparent; color: rgba(255,255,255,0.5); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+.nav-tab:hover { color: rgba(255,255,255,0.8); }
+.nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; padding-right: 16px; }
+.generate-btn { background: var(--gold); color: var(--navy); border: none; font-family: 'Source Sans 3', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 20px; border-radius: 2px; cursor: pointer; transition: background 0.2s; }
+.generate-btn:hover { background: var(--gold-light); }
+
+/* ── PANEL SYSTEM ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── CALCULATOR ── */
+.calc-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.calc-card { background: white; border-radius: 4px; box-shadow: 0 2px 20px rgba(0,0,0,0.08); overflow: hidden; }
+.calc-card.full { grid-column: 1 / -1; }
+.card-hdr { background: var(--navy); padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
+.card-hdr h3 { font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); }
+.card-body { padding: 20px; }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); font-weight: 600; }
+.field input, .field select { border: 1px solid #ddd; border-radius: 3px; padding: 8px 10px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: var(--text-dark); background: white; width: 100%; transition: border 0.15s; }
+.field input:focus, .field select:focus { outline: none; border-color: var(--navy); }
+.field.full { grid-column: 1 / -1; }
+.field.third { grid-column: span 1; }
+.auto-calc-hint { font-size: 10px; color: var(--gold); font-style: italic; margin-top: 2px; }
+.spx-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.spx-year { display: flex; flex-direction: column; gap: 4px; text-align: center; }
+.spx-year label { font-size: 10px; color: var(--text-light); letter-spacing: 0.05em; }
+.spx-year input { text-align: center; padding: 7px 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 13px; color: var(--text-dark); }
+.spx-year input.neg { color: var(--red-light); border-color: #f0c0c0; }
+.spx-year input.pos { color: var(--green-light); }
+.calc-note { font-size: 11px; color: var(--text-light); line-height: 1.6; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0ece4; }
+.scenario-box { background: #f0f5ff; border: 1px solid #c0d0f0; border-radius: 4px; padding: 12px 14px; margin-top: 12px; }
+.scenario-box .sc-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin-bottom: 4px; }
+.scenario-box .sc-desc { font-size: 11px; color: var(--text-mid); line-height: 1.5; }
+
+/* ── PRINT BAR ── */
+.print-bar { background: #1a3560; display: flex; align-items: center; justify-content: space-between; padding: 10px 32px; }
+.print-hint { font-size: 11px; color: rgba(255,255,255,0.45); }
+.print-btn { background: rgba(201,168,76,0.15); border: 1px solid var(--gold); color: var(--gold); font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 16px; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
+.print-btn:hover { background: var(--gold); color: var(--navy); }
+
+/* ── REPORT AREA ── */
+.report-area { padding: 0; }
+.report-tabs { background: #1a3560; display: flex; padding: 0 32px; }
+.report-tab { font-size: 12px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; padding: 12px 18px; border: none; background: transparent; color: rgba(255,255,255,0.45); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.report-tab.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
+.report-content { display: none; }
+.report-content.active { display: block; }
+
+/* ── PAGE CHROME ── */
+.page { background: white; width: 100%; max-width: 900px; margin: 32px auto; box-shadow: 0 8px 60px rgba(0,0,0,0.2); overflow: hidden; }
+
+/* ══ 1-PAGE REPORT ══ */
+.r1-header { background: var(--navy); padding: 48px 56px 40px; position: relative; overflow: hidden; }
+.r1-header::before { content:''; position:absolute; top:-40px; right:-40px; width:300px; height:300px; border:1px solid rgba(201,168,76,0.15); border-radius:50%; }
+.r1-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; display: block; font-family: 'Source Sans 3', sans-serif; }
+.r1-headline { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; color: white; line-height: 1.15; margin-bottom: 8px; }
+.r1-headline em { color: var(--gold); font-style: normal; }
+.r1-subhead { font-size: 14px; color: rgba(255,255,255,0.6); font-weight: 300; margin-bottom: 26px; line-height: 1.5; }
+.client-strip { display: flex; gap: 28px; background: rgba(255,255,255,0.06); border: 1px solid rgba(201,168,76,0.2); border-radius: 4px; padding: 12px 18px; flex-wrap: wrap; }
+.cs-item .cs-label { color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; display: block; margin-bottom: 3px; }
+.cs-item .cs-val { color: white; font-size: 13px; font-weight: 500; }
+.r1-body { padding: 36px 56px 44px; }
+.voss-block { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--navy); line-height: 1.6; margin-bottom: 28px; padding-left: 18px; border-left: 3px solid var(--gold); }
+.voss-block em { color: var(--red-light); font-style: italic; }
+.metrics-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px; }
+.metric { border: 0.5px solid #e0dbd0; border-radius: 4px; padding: 18px 16px; }
+.metric.primary { background: var(--navy); border-color: var(--navy); }
+.metric.danger { border-left: 4px solid var(--red-light); }
+.metric.good { border-left: 4px solid var(--green-light); }
+.metric .m-lbl { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); display: block; margin-bottom: 5px; }
+.metric.primary .m-lbl { color: rgba(255,255,255,0.45); }
+.metric .m-val { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; }
+.metric.primary .m-val { color: var(--gold); }
+.metric.good .m-val { color: var(--green-light); }
+.metric.danger .m-val { color: var(--red-light); }
+.metric .m-sub { font-size: 11px; color: var(--text-light); margin-top: 4px; line-height: 1.4; }
+.metric.primary .m-sub { color: rgba(255,255,255,0.35); }
+.divider-label { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.divider-label span { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-light); white-space: nowrap; }
+.divider-label::before,.divider-label::after { content:''; flex:1; height:0.5px; background:#ddd; }
+.voss-q { background: var(--gray-light); border-radius: 4px; padding: 18px 22px; margin-bottom: 18px; }
+.voss-q p { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--navy); line-height: 1.55; }
+.voss-q .vq-ans { font-size: 13px; color: var(--text-mid); margin-top: 10px; line-height: 1.6; }
+.rx-block { background: var(--navy); color: white; border-radius: 4px; padding: 22px 26px; margin-bottom: 22px; }
+.rx-block h3 { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--gold); margin-bottom: 10px; }
+.rx-block p { font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.65; }
+.timeline-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #e0dbd0; border: 0.5px solid #e0dbd0; border-radius: 4px; overflow: hidden; margin-bottom: 24px; }
+.tl-item { background: white; padding: 14px 12px; }
+.tl-item .tl-age { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); }
+.tl-item .tl-val { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: var(--navy); margin: 4px 0; }
+.tl-item .tl-val.gold { color: var(--gold); }
+.tl-item .tl-lbl { font-size: 11px; color: var(--text-light); }
+.kennedy { font-size: 13px; color: var(--text-mid); line-height: 1.7; margin-bottom: 18px; }
+.kennedy strong { color: var(--navy); }
+.cta-bar { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; background: var(--cream); border: 1px solid #e0dbd0; border-radius: 4px; }
+.cta-text { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--navy); }
+.cta-contact { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+.cta-badge { background: var(--gold); color: var(--navy); font-weight: 700; font-size: 11px; letter-spacing: 0.06em; padding: 10px 18px; border-radius: 2px; text-transform: uppercase; }
+.r1-footer { padding: 14px 56px; border-top: 0.5px solid #e0dbd0; display: flex; justify-content: space-between; align-items: center; }
+.footer-logo { font-family: 'Playfair Display', serif; font-size: 13px; color: var(--navy); font-weight: 700; }
+.footer-logo em { color: var(--gold); font-style: normal; }
+.footer-disc { font-size: 9px; color: var(--text-light); max-width: 480px; line-height: 1.4; }
+
+/* ══ FULL REPORT ══ */
+.cover { background: var(--navy); min-height: 860px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.cover::before { content:''; position:absolute; top:-100px; right:-100px; width:600px; height:600px; border:1px solid rgba(201,168,76,0.07); border-radius:50%; }
+.cover::after { content:''; position:absolute; top:-50px; right:-50px; width:400px; height:400px; border:1px solid rgba(201,168,76,0.05); border-radius:50%; }
+.cover-top { padding: 48px 64px; flex: 1; position: relative; }
+.cover-eyebrow { font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); margin-bottom: 44px; display: block; }
+.cover-conf { display: inline-block; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 2px; margin-bottom: 56px; }
+.cover-h1 { font-family: 'Playfair Display', serif; font-size: 50px; font-weight: 900; color: white; line-height: 1.1; margin-bottom: 8px; }
+.cover-h1 em { color: var(--gold); font-style: normal; }
+.cover-h2 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 400; color: rgba(255,255,255,0.45); line-height: 1.45; margin-bottom: 56px; }
+.cover-stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid rgba(201,168,76,0.2); border-radius: 4px; overflow: hidden; max-width: 580px; }
+.cstat { padding: 22px 26px; border-right: 1px solid rgba(201,168,76,0.15); }
+.cstat:last-child { border: none; }
+.cstat-lbl { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.3); display: block; margin-bottom: 5px; }
+.cstat-val { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--gold); display: block; }
+.cstat-sub { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 2px; display: block; }
+.cover-bottom { background: rgba(0,0,0,0.25); padding: 26px 64px; display: flex; justify-content: space-between; align-items: center; position: relative; }
+.cover-client { font-family: 'Playfair Display', serif; font-size: 18px; color: white; }
+.cover-client span { font-size: 11px; color: rgba(255,255,255,0.35); font-family: 'Source Sans 3', sans-serif; display: block; margin-bottom: 3px; }
+.cover-logo-center { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: white; position: absolute; left: 50%; transform: translateX(-50%); }
+.cover-logo-center em { color: var(--gold); font-style: normal; }
+.cover-meta { font-size: 11px; color: rgba(255,255,255,0.35); text-align: right; line-height: 1.8; }
+
+/* Page structure */
+.pg { background: white; }
+.pg-hdr { padding: 38px 64px 26px; border-bottom: 1px solid #e0dbd0; display: flex; justify-content: space-between; align-items: flex-end; }
+.pg-hdr h2 { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--navy); }
+.pg-info { font-size: 11px; color: var(--text-light); text-align: right; line-height: 1.8; }
+.pg-body { padding: 32px 64px 44px; }
+.pg-footer { padding: 14px 64px; border-top: 0.5px solid #e0dbd0; display: flex; justify-content: space-between; align-items: center; }
+.pg-footer .pf-logo { font-family: 'Playfair Display', serif; font-size: 13px; color: var(--navy); font-weight: 700; }
+.pg-footer .pf-logo em { color: var(--gold); font-style: normal; }
+.pg-footer .pf-pg { font-size: 11px; color: var(--text-light); }
+
+/* Exec summary */
+.voss-lg { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--navy); line-height: 1.65; margin-bottom: 28px; border-left: 5px solid var(--gold); padding-left: 22px; }
+.voss-lg em { color: var(--red-light); font-style: italic; }
+.metrics-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #ddd; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 28px; }
+.m4 { background: white; padding: 20px 16px; }
+.m4.navy { background: var(--navy); }
+.m4 .m4-lbl { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); display: block; margin-bottom: 5px; }
+.m4.navy .m4-lbl { color: rgba(255,255,255,0.4); }
+.m4 .m4-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--navy); }
+.m4.navy .m4-val { color: var(--gold); }
+.m4 .m4-val.gr { color: var(--green-light); }
+.m4 .m4-val.rd { color: var(--red-light); }
+.m4 .m4-sub { font-size: 11px; color: var(--text-light); margin-top: 3px; line-height: 1.4; }
+.m4.navy .m4-sub { color: rgba(255,255,255,0.35); }
+.two-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+.panel-box { border: 0.5px solid #e0dbd0; border-radius: 4px; padding: 22px; }
+.panel-box h3 { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--navy); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 0.5px solid #e8e4da; }
+.panel-box.dark { background: var(--navy); border-color: var(--navy); }
+.panel-box.dark h3 { color: var(--gold); border-color: rgba(201,168,76,0.2); }
+.check-item { font-size: 13px; color: var(--text-mid); line-height: 1.6; margin-bottom: 12px; padding-left: 14px; border-left: 2px solid var(--gold); }
+.check-item strong { color: var(--navy); }
+.warn-item { font-size: 13px; color: var(--text-mid); line-height: 1.6; margin-bottom: 12px; padding-left: 14px; border-left: 2px solid var(--red-light); }
+.warn-item strong { color: var(--red-light); }
+.data-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 0.5px solid rgba(255,255,255,0.08); font-size: 13px; }
+.data-row:last-child { border: none; font-weight: 600; }
+.data-row .dr-lbl { color: rgba(255,255,255,0.5); }
+.data-row .dr-val { color: white; font-weight: 500; }
+.data-row .dr-val.gold { color: var(--gold-light); }
+.roadmap-3 { display: grid; grid-template-columns: repeat(3, 1fr); border: 0.5px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 24px; }
+.rm-col { padding: 18px 20px; border-right: 0.5px solid #ddd; background: white; }
+.rm-col:last-child { background: var(--navy); border: none; }
+.rm-col .rm-lbl { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; }
+.rm-col:last-child .rm-lbl { color: rgba(255,255,255,0.4); }
+.rm-col .rm-amt { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--navy); }
+.rm-col:last-child .rm-amt { color: var(--gold); }
+.rm-col .rm-detail { font-size: 11px; color: var(--text-mid); margin-top: 6px; line-height: 1.55; }
+.rm-col:last-child .rm-detail { color: rgba(255,255,255,0.55); }
+
+/* Conversion detail */
+.strat-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+.strat-card { border-radius: 4px; padding: 22px 24px; }
+.strat-card.igs { background: #f0f5ff; border: 1px solid #c0d0f0; }
+.strat-card.sma { background: var(--gray-light); border: 0.5px solid #e0dbd0; }
+.strat-card h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin-bottom: 4px; }
+.strat-card .sc-sub { font-size: 11px; color: var(--text-light); margin-bottom: 12px; }
+.strat-card .sc-val { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: var(--navy); }
+.strat-card.igs .sc-val { color: #1a3560; }
+.strat-card .sc-lbl { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+.strat-card .sc-adv { font-size: 11px; color: var(--green-light); font-weight: 600; margin-top: 8px; }
+
+/* Tables */
+.data-tbl { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 22px; }
+.data-tbl th { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); text-align: right; padding: 8px 8px; border-bottom: 1px solid #e0dbd0; background: #faf8f4; }
+.data-tbl th:first-child { text-align: left; }
+.data-tbl td { padding: 8px 8px; text-align: right; border-bottom: 0.5px solid #f2ece4; color: var(--text-dark); }
+.data-tbl td:first-child { text-align: left; color: var(--text-mid); font-weight: 500; }
+.data-tbl tr.subtotal td { background: #f0f5ff; font-weight: 600; }
+.data-tbl tr.total-row td { background: var(--navy); color: white; font-weight: 600; border-bottom: none; }
+.data-tbl td.pos { color: var(--green-light); font-weight: 600; }
+.data-tbl td.igs { color: #1a3560; font-weight: 500; }
+.data-tbl td.tier4 { background: #fff0f0; color: var(--red-light); font-weight: 600; font-size: 10px; letter-spacing: 0.05em; }
+.data-tbl td.tier-base { background: #f0fff4; color: var(--green-light); font-weight: 600; font-size: 10px; }
+.highlight-row td { background: #f0f5ff !important; }
+.breakeven-row td { background: #e8f5e9 !important; font-weight: 600; }
+.floor-note { background: #f8f5f0; border: 0.5px solid #ddd; border-radius: 4px; padding: 18px 22px; margin-bottom: 18px; }
+.floor-note p { font-size: 13px; color: var(--text-mid); line-height: 1.7; }
+.floor-note p strong { color: var(--navy); }
+
+/* Lifetime table page */
+.insight-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+.insight-card { border: 0.5px solid #e0dbd0; border-radius: 4px; padding: 16px; }
+.insight-card h4 { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 7px; }
+.insight-card p { font-size: 12px; color: var(--text-mid); line-height: 1.6; }
+.kennedy-close { background: var(--navy); border-radius: 4px; padding: 26px 30px; margin-bottom: 20px; }
+.kennedy-close h3 { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--gold); margin-bottom: 10px; }
+.kennedy-close p { font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.7; }
+.kennedy-close p+p { margin-top: 10px; }
+.kennedy-close em { font-style: italic; color: var(--gold-light); }
+.sig-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; }
+.sig-left { font-size: 12px; color: var(--text-light); line-height: 1.6; }
+.sig-left strong { color: var(--navy); display: block; margin-bottom: 3px; }
+.sig-right { text-align: right; font-size: 12px; color: var(--text-light); }
+.disc-final { font-size: 9px; color: var(--text-light); line-height: 1.5; padding-top: 14px; border-top: 0.5px solid #e0dbd0; margin-top: 14px; }
+
+/* Detail tables */
+.section-hdr { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--navy); margin-bottom: 6px; }
+.section-sub { font-size: 12px; color: var(--text-light); margin-bottom: 18px; line-height: 1.5; }
+.irmaa-warn { background: #fff8f0; border: 1px solid #f0c070; border-radius: 4px; padding: 14px 18px; margin-bottom: 18px; }
+.irmaa-warn .iw-title { font-size: 11px; font-weight: 600; color: #8a5a00; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+.irmaa-warn p { font-size: 12px; color: #6a4a00; line-height: 1.6; }
+
+/* Scenario summary badge */
+.scenario-badge { display: inline-flex; align-items: center; gap: 8px; background: #f0f5ff; border: 1px solid #c0d0f0; border-radius: 3px; padding: 6px 12px; font-size: 11px; color: var(--navy); margin-bottom: 18px; }
+.scenario-badge strong { font-weight: 700; }
+
+/* ── v5 NEW: After-tax comparison box ── */
+.after-tax-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 20px 0; border: 1px solid #e0dbd0; border-radius: 4px; overflow: hidden; }
+.atc-col { padding: 20px 22px; }
+.atc-col.igs-col { background: linear-gradient(135deg, #f0f8f0, #e8f5e8); border-right: 1px solid #e0dbd0; }
+.atc-col.sma-col { background: #faf8f4; }
+.atc-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; margin-bottom: 10px; display: inline-block; }
+.atc-badge.rec { background: var(--green-light); color: white; }
+.atc-badge.comp { background: #999; color: white; }
+.atc-strat-name { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+.atc-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 0.5px solid rgba(0,0,0,0.07); font-size: 12px; }
+.atc-row .lbl { color: var(--text-mid); }
+.atc-row .val { font-weight: 600; color: var(--navy); }
+.atc-row.highlight .val { color: var(--green-light); font-size: 14px; }
+.atc-row.danger .val { color: var(--red-light); }
+.atc-advantage { grid-column: 1 / -1; background: var(--navy); padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; }
+.atc-advantage .adv-lbl { font-size: 11px; color: rgba(255,255,255,0.65); }
+.atc-advantage .adv-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--gold); }
+.p2p-callout { background: #1a3560; border-radius: 4px; padding: 16px 20px; margin: 16px 0; }
+.p2p-callout .pc-title { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.p2p-callout .pc-body { font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.6; }
+.p2p-callout .pc-body strong { color: white; }
+
+/* ── v5 NEW: IRMAA + RMD opportunity boxes ── */
+.opp-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.opp-box { border-radius: 4px; padding: 20px 22px; }
+.opp-box.irmaa-box { background: #fff8e8; border: 1px solid #f0c870; }
+.opp-box.rmd-box { background: #f0f5ff; border: 1px solid #c0d0f0; }
+.opp-box h4 { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+.opp-box.irmaa-box h4 { color: #8a6000; }
+.opp-box.rmd-box h4 { color: var(--navy); }
+.opp-box .opp-big { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; margin: 8px 0 4px; }
+.opp-box.irmaa-box .opp-big { color: #6a4a00; }
+.opp-box.rmd-box .opp-big { color: var(--navy-mid); }
+.opp-box .opp-lbl { font-size: 10px; color: #888; margin-bottom: 10px; }
+.opp-box .opp-detail { font-size: 11px; line-height: 1.6; }
+.opp-box.irmaa-box .opp-detail { color: #6a4a00; }
+.opp-box.rmd-box .opp-detail { color: var(--text-mid); }
+.opp-box .opp-source { font-size: 9px; color: #aaa; margin-top: 8px; font-style: italic; }
+
+/* ── v5 NEW: Roth surpasses milestone row ── */
+.milestone-row td { background: #e8f5e8 !important; font-weight: 700; color: var(--green-light) !important; }
+
+/* ── v5 NEW: IGS contributing row (gray) vs credited row (gold) ── */
+.igs-contrib td.igs { color: #aaa !important; font-style: italic; }
+.igs-credited td.igs { color: var(--gold) !important; font-weight: 700; font-size: 13px; }
+
+/* ── v5 NEW: Recommended badge on strategy cards ── */
+.strat-card.igs { background: linear-gradient(135deg, #f0f8f0, #e8f4e8); border: 1px solid #8fc88f; }
+.rec-badge { display: inline-block; background: var(--green-light); color: white; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-bottom: 6px; }
+.comp-badge { display: inline-block; background: #999; color: white; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-bottom: 6px; }
+
+/* ══ PRINT CSS ══ */
+@media print {
+  /* ─ Hide chrome ─ */
+  body[data-print] .top-nav,
+  body[data-print] .print-bar,
+  body[data-print] .report-tabs { display: none !important; }
+
+  /* ─ Page shell ─ */
+  body[data-print] .page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* ─ Panel visibility ─ */
+  body[data-print="r1"] #calc,
+  body[data-print="r1"] #reportFull { display: none !important; }
+  body[data-print="r1"] #report1 { display: block !important; }
+  body[data-print="full"] #calc,
+  body[data-print="full"] #report1 { display: none !important; }
+  body[data-print="full"] #reportFull { display: block !important; }
+
+  /* ─ Page breaks between .page divs ─ */
+  body[data-print="full"] .page {
+    page-break-after: always;
+    break-after: page;
+  }
+  body[data-print="full"] .page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* ─ Never break INSIDE these elements ─ */
+  .strat-card,
+  .strat-compare,
+  .after-tax-compare,
+  .p2p-callout,
+  .opp-box,
+  .opp-boxes,
+  .insight-card,
+  .insight-3,
+  .kennedy-close,
+  .floor-note,
+  .irmaa-warn,
+  .metric,
+  .metrics-3,
+  .metrics-4,
+  .timeline-4,
+  .tl-item,
+  .rm-col,
+  .voss-block,
+  .voss-lg,
+  .scenario-badge,
+  .check-item,
+  .warn-item,
+  .roadmap-3,
+  .two-panel,
+  .sig-row,
+  .cta-bar,
+  .cover-stats,
+  .client-strip,
+  .card-hdr,
+  .section-hdr,
+  .data-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ─ Table rules ─ */
+  /* thead repeats after every page break */
+  .data-tbl thead { display: table-header-group; }
+
+  /* Individual rows never split mid-row */
+  .data-tbl tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Keep thead glued to first body row */
+  .data-tbl thead tr:last-child {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Section header + its sub-header stay together */
+  .section-hdr,
+  .section-sub {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Don't start a new page immediately after a section header */
+  .section-hdr + .section-sub,
+  .section-hdr + table,
+  .section-sub + table {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
+  /* Keep pg-hdr on same page as its first content block */
+  .pg-hdr {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .pg-hdr + div,
+  .pg-hdr + table {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
+  /* pg-footer stays with last content line */
+  .pg-footer {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
+  /* ─ Page layout ─ */
+  @page { margin: 0.4in 0.45in; size: letter; }
+  @page :first { margin-top: 0; }
+
+  /* ─ Shrink fonts slightly to fit more on a page ─ */
+  .data-tbl { font-size: 10px !important; }
+  .data-tbl th { font-size: 8px !important; padding: 5px 6px !important; }
+  .data-tbl td { padding: 6px 6px !important; }
+
+  /* ─ Two-column grids collapse to single column on narrow print ─ */
+  .opp-boxes { grid-template-columns: 1fr !important; }
+  .after-tax-compare { grid-template-columns: 1fr !important; }
+  .atc-col.igs-col { border-right: none !important; border-bottom: 1px solid #e0dbd0; }
+  .atc-advantage { grid-column: 1 !important; }
+
+  /* ─ Print-only page break utility ─ */
+  .print-page-break {
+    display: none;
+  }
+  .print-page-break-before {
+    break-before: page;
+    page-break-before: always;
+  }
+  .print-no-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ── BASELINE REPORT PRINT FIXES ── */
+
+  /* Never break inside these baseline boxes */
+  .bl-kennedy,
+  .bl-voss,
+  .bl-shocks,
+  .bl-claim-bar-wrap,
+  .bl-inherit-box {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Force a clean page break between page 1 and page 2 */
+  body[data-print="rb"] #page-bl1 {
+    break-after: page;
+    page-break-after: always;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  /* Last page — do NOT reserve a blank full page after it */
+  body[data-print="rb"] #page-bl2 {
+    break-after: avoid;
+    page-break-after: avoid;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  /* Tighten baseline header so Kennedy box fits on page 1 */
+  body[data-print="rb"] .bl-header {
+    padding: 26px 44px 20px;
+  }
+  body[data-print="rb"] .bl-body {
+    padding: 20px 28px 16px;
+  }
+  body[data-print="rb"] .bl-voss {
+    margin-bottom: 18px;
+    padding: 14px 18px;
+    font-size: 12px;
+  }
+  body[data-print="rb"] .bl-shocks {
+    margin-bottom: 18px;
+    gap: 12px;
+  }
+  body[data-print="rb"] .bl-shock {
+    padding: 14px 12px;
+  }
+  body[data-print="rb"] .bl-shock-val {
+    font-size: 22px;
+  }
+  body[data-print="rb"] .bl-claim-bar-wrap {
+    padding: 14px 18px;
+    margin-bottom: 18px;
+  }
+  body[data-print="rb"] .bl-kennedy {
+    font-size: 11px;
+    padding: 14px 18px;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   CLIENT MANAGEMENT
+══════════════════════════════════════════════ */
+.client-roster-card { grid-column: 1 / -1; }
+.client-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.client-select {
+  flex: 1; min-width: 220px; max-width: 360px;
+  border: 1px solid #ddd; border-radius: 3px;
+  padding: 8px 10px; font-family: 'Source Sans 3', sans-serif;
+  font-size: 14px; color: var(--text-dark); background: white;
+}
+.client-select:focus { outline: none; border-color: var(--navy); }
+.client-btn {
+  border: none; border-radius: 2px; cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif; font-size: 12px;
+  font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 9px 16px; transition: all 0.15s; white-space: nowrap;
+}
+.client-btn.primary   { background: var(--navy); color: white; }
+.client-btn.primary:hover { background: var(--navy-mid); }
+.client-btn.success   { background: var(--green); color: white; }
+.client-btn.success:hover { background: var(--green-light); }
+.client-btn.warning   { background: #e07b00; color: white; }
+.client-btn.warning:hover { background: #c06000; }
+.client-btn.danger    { background: transparent; border: 1px solid #c42b2b; color: #c42b2b; }
+.client-btn.danger:hover  { background: #c42b2b; color: white; }
+.client-btn.neutral   { background: #f0ece4; color: var(--text-dark); border: 1px solid #ddd; }
+.client-btn.neutral:hover { background: #e0dbd0; }
+.client-btn-sep { width: 1px; height: 28px; background: #ddd; margin: 0 4px; }
+.client-status {
+  font-size: 11px; color: var(--text-light); font-style: italic;
+  margin-top: 8px; min-height: 16px;
+}
+.client-status.ok   { color: var(--green-light); }
+.client-status.warn { color: #e07b00; }
+.client-status.err  { color: var(--red-light); }
+
+/* Clients panel roster table */
+.clients-panel-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+.clients-panel-hdr {
+  background: var(--navy); padding: 22px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: 4px 4px 0 0;
+}
+.clients-panel-hdr h2 {
+  font-family: 'Playfair Display', serif; font-size: 22px;
+  font-weight: 700; color: white; margin: 0;
+}
+.clients-panel-hdr .cp-sub {
+  font-size: 11px; color: rgba(255,255,255,0.45);
+  margin-top: 3px; font-family: 'Source Sans 3', sans-serif;
+}
+.clients-panel-body {
+  background: white; border: 1px solid #e0dbd0;
+  border-top: none; border-radius: 0 0 4px 4px;
+  overflow: hidden;
+}
+.clients-empty {
+  text-align: center; padding: 60px 24px;
+  color: var(--text-light); font-size: 14px; line-height: 1.8;
+}
+.clients-empty strong { color: var(--text-mid); display: block; font-size: 16px; margin-bottom: 6px; }
+.roster-tbl { width: 100%; border-collapse: collapse; }
+.roster-tbl th {
+  background: #f7f5f0; padding: 10px 14px; text-align: left;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-light);
+  border-bottom: 1px solid #e0dbd0;
+}
+.roster-tbl td {
+  padding: 12px 14px; border-bottom: 1px solid #f0ece4;
+  font-size: 13px; color: var(--text-dark); vertical-align: middle;
+}
+.roster-tbl tr:last-child td { border-bottom: none; }
+.roster-tbl tr:hover td { background: #faf8f4; }
+.rt-name { font-weight: 600; color: var(--navy); }
+.rt-ira  { font-weight: 600; color: var(--green-light); }
+.rt-saved { font-size: 11px; color: var(--text-light); }
+.rt-actions { display: flex; gap: 6px; }
+.rt-btn {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 5px 10px; border-radius: 2px;
+  cursor: pointer; border: none; transition: all 0.15s;
+}
+.rt-btn.load   { background: var(--navy); color: white; }
+.rt-btn.load:hover { background: var(--navy-mid); }
+.rt-btn.del    { background: transparent; border: 1px solid #ddd; color: #c42b2b; }
+.rt-btn.del:hover  { background: #c42b2b; color: white; border-color: #c42b2b; }
+.clients-panel-footer {
+  background: #f7f5f0; padding: 14px 24px;
+  display: flex; gap: 10px; border-top: 1px solid #e0dbd0;
+  flex-wrap: wrap; align-items: center;
+}
+.cp-count { font-size: 11px; color: var(--text-light); margin-right: auto; }
+
+/* Confirm dialog overlay */
+.confirm-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55); z-index: 9000;
+  align-items: center; justify-content: center;
+}
+.confirm-overlay.open { display: flex; }
+.confirm-box {
+  background: white; border-radius: 4px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  padding: 32px 36px; max-width: 400px; width: 90%;
+  text-align: center;
+}
+.confirm-icon { font-size: 32px; margin-bottom: 12px; }
+.confirm-title {
+  font-family: 'Playfair Display', serif; font-size: 18px;
+  font-weight: 700; color: var(--navy); margin-bottom: 8px;
+}
+.confirm-msg {
+  font-size: 13px; color: var(--text-mid); line-height: 1.6;
+  margin-bottom: 24px;
+}
+.confirm-msg strong { color: var(--navy); }
+.confirm-btns { display: flex; gap: 10px; justify-content: center; }
+.confirm-ok  { background: var(--red); color: white; border: none; border-radius: 2px; padding: 10px 24px; font-weight: 700; font-size: 13px; cursor: pointer; letter-spacing: 0.04em; }
+.confirm-ok:hover { background: var(--red-light); }
+.confirm-cancel { background: #f0ece4; color: var(--text-dark); border: none; border-radius: 2px; padding: 10px 24px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.confirm-cancel:hover { background: #e0dbd0; }
+
+@media print { .confirm-overlay { display: none !important; } }
+
+/* ══════════════════════════════════════════════
+   BASELINE BUTTON (warning amber)
+══════════════════════════════════════════════ */
+.generate-btn.baseline-btn {
+  background: transparent;
+  border: 1px solid #e07b00;
+  color: #e09030;
+}
+.generate-btn.baseline-btn:hover {
+  background: #e07b00;
+  color: white;
+}
+
+/* ══════════════════════════════════════════════
+   BASELINE REPORT — DIAGNOSTIC STYLE
+══════════════════════════════════════════════ */
+
+/* Header — near-black with red accent bar */
+.bl-header {
+  background: #111820;
+  padding: 46px 56px 38px;
+  position: relative;
+  border-bottom: 4px solid #a52020;
+}
+.bl-header::after {
+  content: 'DIAGNOSTIC ASSESSMENT';
+  position: absolute;
+  top: 24px; right: 52px;
+  font-size: 9px; letter-spacing: 0.35em; font-weight: 700;
+  color: #a52020; font-family: 'Source Sans 3', sans-serif;
+}
+.bl-eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.3em;
+  text-transform: uppercase; color: #c07030;
+  margin-bottom: 16px; display: block;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.bl-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px; font-weight: 700; line-height: 1.25;
+  color: white; margin-bottom: 18px; max-width: 700px;
+}
+.bl-headline em { color: #d44; font-style: normal; }
+.bl-subhead {
+  font-size: 13px; color: rgba(255,255,255,0.5);
+  line-height: 1.6; max-width: 600px; margin-bottom: 24px;
+}
+.bl-client-strip {
+  display: flex; gap: 32px; flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 18px; margin-top: 6px;
+}
+.bl-cs-item { display: flex; flex-direction: column; gap: 3px; }
+.bl-cs-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.35); font-family: 'Source Sans 3', sans-serif; }
+.bl-cs-val { font-size: 14px; font-weight: 600; color: white; font-family: 'Source Sans 3', sans-serif; }
+
+/* Voss opener block */
+.bl-voss {
+  background: #f7f5f0;
+  border-left: 4px solid #c07030;
+  padding: 18px 22px;
+  font-size: 13px; line-height: 1.7; color: #2a3040;
+  font-style: italic; margin-bottom: 28px;
+  font-family: 'Playfair Display', serif;
+}
+.bl-voss em { font-style: normal; font-weight: 700; color: #a52020; }
+
+/* Shock stat boxes */
+.bl-shocks {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 16px; margin-bottom: 28px;
+}
+.bl-shock {
+  background: white;
+  border: 1px solid #e0dbd0;
+  border-radius: 3px;
+  padding: 20px 18px;
+  text-align: center;
+  position: relative;
+}
+.bl-shock.danger { border-top: 3px solid #c42b2b; }
+.bl-shock.warn   { border-top: 3px solid #c07030; }
+.bl-shock.neutral{ border-top: 3px solid #1a3560; }
+.bl-shock-lbl {
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #6b7a94; font-weight: 600; margin-bottom: 8px;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.bl-shock-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px; font-weight: 700; line-height: 1;
+  color: #0d1f3c; margin-bottom: 6px;
+}
+.bl-shock.danger .bl-shock-val { color: #c42b2b; }
+.bl-shock.warn   .bl-shock-val { color: #a06000; }
+.bl-shock-sub {
+  font-size: 10px; color: #8a9ab0; line-height: 1.4;
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+/* Embedded claim bar visual */
+.bl-claim-bar-wrap {
+  background: white; border: 1px solid #e0dbd0;
+  border-radius: 3px; padding: 20px 22px; margin-bottom: 28px;
+}
+.bl-claim-bar-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #0d1f3c;
+  margin-bottom: 6px; font-family: 'Source Sans 3', sans-serif;
+}
+.bl-claim-bar-sub {
+  font-size: 11px; color: #6b7a94; margin-bottom: 14px;
+  font-family: 'Source Sans 3', sans-serif; line-height: 1.5;
+}
+.bl-bar-track {
+  height: 28px; background: #f0ece4; border-radius: 2px;
+  overflow: hidden; display: flex; position: relative;
+}
+.bl-bar-yours { background: #2d7a4f; height: 100%; transition: width 0.6s; display: flex; align-items: center; justify-content: center; }
+.bl-bar-irs   { background: #c42b2b; height: 100%; transition: width 0.6s; display: flex; align-items: center; justify-content: center; }
+.bl-bar-yours span, .bl-bar-irs span {
+  font-size: 10px; font-weight: 700; color: white;
+  letter-spacing: 0.05em; font-family: 'Source Sans 3', sans-serif;
+  white-space: nowrap; padding: 0 8px;
+}
+.bl-bar-legend {
+  display: flex; gap: 24px; margin-top: 10px;
+}
+.bl-bar-legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: #3d4f6e;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.bl-bar-dot { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+
+/* Kennedy closer on page 1 */
+.bl-kennedy {
+  background: #111820;
+  border-left: 4px solid #c42b2b;
+  padding: 18px 22px;
+  font-size: 12px; line-height: 1.7; color: rgba(255,255,255,0.85);
+  margin-bottom: 0;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.bl-kennedy strong { color: white; }
+.bl-kennedy em { color: #e09030; font-style: normal; }
+
+/* RMD treadmill table page */
+.bl-treadmill-hdr {
+  background: #a52020; padding: 8px 22px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
+  text-transform: uppercase; color: white;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.bl-totals-row {
+  background: #1a1a2a; color: white;
+}
+.bl-totals-row td {
+  font-weight: 700; color: white !important;
+  padding: 10px 10px !important;
+}
+
+/* Inheritance block */
+.bl-inherit-box {
+  background: #fff8f0;
+  border: 1px solid #f0c080;
+  border-left: 4px solid #c07030;
+  border-radius: 3px;
+  padding: 18px 22px; margin-top: 20px;
+}
+.bl-inherit-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #7a4000;
+  margin-bottom: 8px; font-family: 'Source Sans 3', sans-serif;
+}
+.bl-inherit-body {
+  font-size: 12px; line-height: 1.7; color: #3a2800;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.bl-inherit-body strong { color: #a52020; }
+
+/* Page footer */
+.bl-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 22px; background: #111820;
+  font-size: 9px; color: rgba(255,255,255,0.35);
+  font-family: 'Source Sans 3', sans-serif; letter-spacing: 0.06em;
+}
+
+/* Section wrapper for page body */
+.bl-body { padding: 28px 32px 24px; }
+
+@media print {
+  body[data-print="rb"] .panel { display: none; }
+  body[data-print="rb"] #reportBaseline { display: block !important; }
+  body[data-print="rb"] .print-bar { display: none; }
+  body[data-print="rb"] .bl-header::after { display: none; }
+  .bl-bar-yours, .bl-bar-irs { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bl-header, .bl-kennedy, .bl-treadmill-hdr, .bl-totals-row, .bl-footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="top-nav">
+  <div class="brand">Roth<em>Rx</em> Blueprint</div>
+  <div class="nav-tabs">
+    <a href="/" style="font-size:12px;color:rgba(255,255,255,0.5);padding:0 14px;border-right:1px solid rgba(255,255,255,0.1);text-decoration:none;display:flex;align-items:center;">← Home</a>
+    <button class="nav-tab" onclick="showPanel('panelClients',this)">⊞ Clients</button>
+    <button class="nav-tab active" onclick="showPanel('calc',this)">Calculator</button>
+    <button class="nav-tab" onclick="showPanel('reportBaseline',this)">Baseline Report</button>
+    <button class="nav-tab" onclick="showPanel('report1',this)">1-Page Report</button>
+    <button class="nav-tab" onclick="showPanel('reportFull',this)">Full Report</button>
+  </div>
+  <div class="nav-right">
+    <button class="generate-btn baseline-btn" onclick="generateBaseline()">⚠ Their Baseline</button>
+    <button class="generate-btn" onclick="generate()">▶ Generate Reports</button>
+  </div>
+</div>
+
+<!-- CALCULATOR PANEL -->
+<div id="calc" class="panel active">
+<div class="calc-wrap">
+
+  <!-- CLIENT ROSTER CARD -->
+  <div class="calc-card full client-roster-card">
+    <div class="card-hdr"><h3>Client Roster</h3></div>
+    <div class="card-body">
+      <div class="client-toolbar">
+        <select class="client-select" id="clientRosterSelect" onchange="onRosterSelectChange()">
+          <option value="">— Select a saved client —</option>
+        </select>
+        <button class="client-btn primary" onclick="loadSelectedClient()">↓ Load</button>
+        <div class="client-btn-sep"></div>
+        <button class="client-btn success" onclick="saveCurrentClient()">💾 Save / Update</button>
+        <button class="client-btn warning" onclick="newClient()">＋ New Client</button>
+        <button class="client-btn danger"  id="deleteClientBtn" onclick="deleteSelectedClient()" disabled>✕ Delete</button>
+        <div class="client-btn-sep"></div>
+        <button class="client-btn neutral" onclick="exportClients()" title="Download all clients as a JSON backup file">⬇ Export</button>
+        <label class="client-btn neutral" style="cursor:pointer;" title="Load clients from a previously exported JSON file">
+          ⬆ Import<input type="file" accept=".json" style="display:none;" onchange="importClients(event)">
+        </label>
+      </div>
+      <div class="client-status" id="clientStatusMsg"></div>
+    </div>
+  </div>
+
+  <div class="calc-card">
+    <div class="card-hdr"><h3>Client Profile</h3></div>
+    <div class="card-body">
+      <div class="field-grid">
+        <div class="field full"><label>Client Full Name</label><input id="clientName" value='William "Bill" Scullin'></div>
+        <div class="field"><label>Age</label><input id="age" type="number" value="73"></div>
+        <div class="field"><label>Filing Status</label>
+          <select id="filingStatus" onchange="onFilingStatusChange()">
+            <option value="single" selected>Single</option>
+            <option value="mfj">Married Filing Jointly</option>
+          </select>
+        </div>
+        <div class="field"><label>State</label>
+          <select id="state" onchange="onStateChange()">
+            <option value="Alabama">Alabama</option>
+            <option value="Alaska">Alaska (No Income Tax)</option>
+            <option value="Arizona">Arizona</option>
+            <option value="Arkansas">Arkansas</option>
+            <option value="California">California</option>
+            <option value="Colorado">Colorado</option>
+            <option value="Connecticut">Connecticut</option>
+            <option value="Delaware">Delaware</option>
+            <option value="Florida">Florida (No Income Tax)</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Hawaii">Hawaii</option>
+            <option value="Idaho">Idaho</option>
+            <option value="Illinois">Illinois</option>
+            <option value="Indiana">Indiana</option>
+            <option value="Iowa">Iowa</option>
+            <option value="Kansas">Kansas</option>
+            <option value="Kentucky">Kentucky</option>
+            <option value="Louisiana" selected>Louisiana</option>
+            <option value="Maine">Maine</option>
+            <option value="Maryland">Maryland</option>
+            <option value="Massachusetts">Massachusetts</option>
+            <option value="Michigan">Michigan</option>
+            <option value="Minnesota">Minnesota</option>
+            <option value="Mississippi">Mississippi</option>
+            <option value="Missouri">Missouri</option>
+            <option value="Montana">Montana</option>
+            <option value="Nebraska">Nebraska</option>
+            <option value="Nevada">Nevada (No Income Tax)</option>
+            <option value="New Hampshire">New Hampshire (No Income Tax)</option>
+            <option value="New Jersey">New Jersey</option>
+            <option value="New Mexico">New Mexico</option>
+            <option value="New York">New York</option>
+            <option value="North Carolina">North Carolina</option>
+            <option value="North Dakota">North Dakota</option>
+            <option value="Ohio">Ohio</option>
+            <option value="Oklahoma">Oklahoma</option>
+            <option value="Oregon">Oregon</option>
+            <option value="Pennsylvania">Pennsylvania</option>
+            <option value="Rhode Island">Rhode Island</option>
+            <option value="South Carolina">South Carolina</option>
+            <option value="South Dakota">South Dakota (No Income Tax)</option>
+            <option value="Tennessee">Tennessee (No Income Tax)</option>
+            <option value="Texas">Texas (No Income Tax)</option>
+            <option value="Utah">Utah</option>
+            <option value="Vermont">Vermont</option>
+            <option value="Virginia">Virginia</option>
+            <option value="Washington">Washington (No Income Tax)</option>
+            <option value="West Virginia">West Virginia</option>
+            <option value="Wisconsin">Wisconsin</option>
+            <option value="Wyoming">Wyoming (No Income Tax)</option>
+            <option value="District of Columbia">District of Columbia</option>
+          </select>
+        </div>
+        <div class="field"><label>State Tax Rate (%) <span style="font-size:9px;color:#aaa;">— auto-fills, adjustable</span></label><input id="stateRate" type="number" step="0.01" value="3.0"></div>
+        <div class="field"><label>Prepared By</label><input id="preparedBy" value="TaxesRx"></div>
+        <div class="field"><label>Report Date</label><input id="reportDate" value="April 2026"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="calc-card">
+    <div class="card-hdr"><h3>Income Sources</h3></div>
+    <div class="card-body">
+      <div class="field-grid">
+        <div class="field"><label>Pension / Retirement Income ($)</label><input id="pension" type="number" value="58000"></div>
+        <div class="field"><label>Social Security Gross ($)</label><input id="ssBrut" type="number" value="48000"></div>
+        <div class="field"><label>Investment / Dividend ($)</label><input id="investment" type="number" value="3000"></div>
+        <div class="field"><label>Wages / Other ($)</label><input id="wages" type="number" value="0"></div>
+        <div class="field"><label>Tax-Exempt Interest ($)</label><input id="taxExemptInt" type="number" value="0"><div class="auto-calc-hint">Muni bonds etc. — added to MAGI for IRMAA only, not taxable income</div></div>
+        <div class="field"><label>SS COLA Rate (%)</label><input id="ssCola" type="number" step="0.1" value="2.5"><div class="auto-calc-hint">Social Security cost-of-living adjustment per year (SSA avg: 2.5%)</div></div>
+        <div class="field"><label>Pre-Conversion AGI ($)</label><input id="agi" type="number" value="199950"></div>
+        <div class="field"><label>Standard Deduction ($)</label><input id="stdDed" type="number" value="18150"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="calc-card full">
+    <div class="card-hdr"><h3>IRA &amp; Conversion Strategy</h3></div>
+    <div class="card-body">
+      <div class="field-grid">
+        <div class="field"><label>Total IRA Value ($)</label><input id="iraBalance" type="number" value="2600000"></div>
+        <div class="field"><label>Total Conversion Goal ($)</label><input id="totalConvAmount" type="number" value="350000" oninput="autoCalcPeriod()">
+          <div class="auto-calc-hint" id="conv-auto-hint">$350,000 ÷ $50,000/yr = 7 years</div>
+        </div>
+        <div class="field"><label>Annual Conversion ($)</label><input id="annualConv" type="number" value="50000" oninput="autoCalcPeriod()"></div>
+        <div class="field"><label>Conversion Period (Years)</label><input id="convPeriod" type="number" value="7"></div>
+        <div class="field"><label>Post-Conv Growth Rate (%)</label><input id="postConvGrowth" type="number" step="0.01" value="9.15"></div>
+        <div class="field"><label>IRA Background Growth Rate (%)</label><input id="iraGrowthRate" type="number" step="0.1" value="7.0"><div class="auto-calc-hint">Post-conversion growth rate (during term, IRA uses actual SPX returns)</div></div>
+        <div class="field"><label>IRMAA Inflation Rate (%)</label><input id="irmaaInflation" type="number" step="0.1" value="7.1"></div>
+        <div class="field"><label>Heir Federal Tax Rate (%)</label><input id="heirRate" type="number" step="1" value="24"></div>
+        <div class="field"><label>Tax Funding Scenario</label>
+          <select id="scenario" onchange="onScenarioChange()">
+            <option value="B" selected>B — Taxes from Conversion (Standard)</option>
+            <option value="A">A — Taxes &amp; RMDs Paid from Outside Funds</option>
+            <option value="C">C — Taxes &amp; RMD Reserve from Conversion</option>
+          </select>
+        </div>
+      </div>
+      <div class="scenario-box" id="scenario-desc-box">
+        <div class="sc-label" id="scenario-label">Scenario B — Standard</div>
+        <div class="sc-desc" id="scenario-desc">Client pays annual conversion taxes from the converted amount. Net after taxes enters the Indexed Growth Strategy each year. RMDs taken separately from the remaining IRA. Most common scenario.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="calc-card">
+    <div class="card-hdr"><h3>Indexed Growth Strategy Parameters</h3></div>
+    <div class="card-body">
+      <div class="field-grid">
+        <div class="field"><label>SPX Participation Rate (%)</label><input id="participation" type="number" step="1" value="80"></div>
+        <div class="field"><label>Annual Floor (%)</label><input id="floor" type="number" step="0.1" value="0"></div>
+        <div class="field"><label>Advisory Fee (annual %)</label><input id="fee" type="number" step="0.01" value="0.75"></div>
+        <div class="field"><label>SPX Period Label</label><input id="spxLabel" value="2019–2025"></div>
+      </div>
+      <div class="calc-note">IGS: floor-protected, point-to-point. No annual fees applied during conversion term. Fee applies to SMA comparison only. Post-conversion growth rate includes advisory fee net-down.</div>
+    </div>
+  </div>
+
+  <div class="calc-card">
+    <div class="card-hdr"><h3>2026 Federal Brackets (Key Thresholds)</h3></div>
+    <div class="card-body">
+      <div class="field-grid">
+        <div class="field"><label>32% Starts — Single ($)</label><input id="brk32s" type="number" value="197300"></div>
+        <div class="field"><label>35% Starts — Single ($)</label><input id="brk35s" type="number" value="256226"></div>
+        <div class="field"><label>32% Starts — MFJ ($)</label><input id="brk32m" type="number" value="394600"></div>
+        <div class="field"><label>35% Starts — MFJ ($)</label><input id="brk35m" type="number" value="501050"></div>
+      </div>
+      <div class="calc-note">Full bracket waterfall used for tax calculations. Adjust thresholds if Congress updates 2026 inflation adjustments. IRMAA: Single thresholds ≈ half of MFJ.</div>
+    </div>
+  </div>
+
+  <div class="calc-card full">
+    <div class="card-hdr"><h3>SPX Annual Returns — Enter Each Year of Conversion Period</h3></div>
+    <div class="card-body">
+      <div class="spx-grid" id="spxGrid"></div>
+      <div class="calc-note">Enter actual S&amp;P 500 point-to-point returns for each year. Negative years: IGS applies 0% floor (no loss). SMA uses actual returns minus advisory fee. Both scenarios start fresh each year — only the net credited return differs.</div>
+    </div>
+  </div>
+
+</div><!-- /calc-wrap -->
+</div><!-- /calc panel -->
+
+<!-- ═══════════════════════════════════════════════════════
+     CLIENTS PANEL
+═══════════════════════════════════════════════════════ -->
+<div id="panelClients" class="panel">
+  <div class="clients-panel-wrap">
+    <div class="clients-panel-hdr">
+      <div>
+        <h2>Client Roster</h2>
+        <div class="cp-sub">All clients are saved locally in your browser. Use Export to back up or move to another machine.</div>
+      </div>
+      <button class="client-btn warning" onclick="newClientFromRoster()">＋ New Client</button>
+    </div>
+    <div class="clients-panel-body">
+      <div id="rosterTableWrap"></div>
+    </div>
+    <div class="clients-panel-footer">
+      <span class="cp-count" id="rosterCount">0 clients saved</span>
+      <button class="client-btn neutral" onclick="exportClients()">⬇ Export All (JSON)</button>
+      <label class="client-btn neutral" style="cursor:pointer;">
+        ⬆ Import JSON<input type="file" accept=".json" style="display:none;" onchange="importClients(event)">
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation dialog (shared) -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+    <div class="confirm-msg"  id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="confirmCancel()">Cancel</button>
+      <button class="confirm-ok"     id="confirmOkBtn" onclick="confirmOk()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     BASELINE REPORT — "Their Current Situation"
+═══════════════════════════════════════════════════════ -->
+<div id="reportBaseline" class="panel report-area">
+<div class="print-bar">
+  <div class="print-hint">RothRx Blueprint · IRA Baseline Assessment · <span id="bl-client-hint"></span> &nbsp;·&nbsp; <em>Print → Save as PDF</em></div>
+  <button class="print-btn" onclick="printReport('rb')">⬇ Print / Save as PDF</button>
+</div>
+
+<!-- PAGE 1: The Wake-Up Call -->
+<div class="page" id="page-bl1">
+  <div class="bl-header">
+    <span class="bl-eyebrow">IRA Health Assessment · Prepared for <span id="bl-name-eyebrow"></span></span>
+    <div class="bl-headline" id="bl-headline"></div>
+    <div class="bl-subhead">This report shows your IRA as it stands today — before any planning. No recommendations. No products. Just the numbers the IRS already knows about your account.</div>
+    <div class="bl-client-strip">
+      <div class="bl-cs-item"><span class="bl-cs-label">Client</span><span class="bl-cs-val" id="bl-name"></span></div>
+      <div class="bl-cs-item"><span class="bl-cs-label">Age</span><span class="bl-cs-val" id="bl-age"></span></div>
+      <div class="bl-cs-item"><span class="bl-cs-label">IRA Balance</span><span class="bl-cs-val" id="bl-ira-bal"></span></div>
+      <div class="bl-cs-item"><span class="bl-cs-label">Est. Tax Rate</span><span class="bl-cs-val" id="bl-rate"></span></div>
+      <div class="bl-cs-item"><span class="bl-cs-label">Date</span><span class="bl-cs-val" id="bl-date"></span></div>
+    </div>
+  </div>
+
+  <div class="bl-body">
+
+    <!-- Voss empathy opener -->
+    <div class="bl-voss" id="bl-voss"></div>
+
+    <!-- Three shock stats -->
+    <div class="bl-shocks">
+      <div class="bl-shock danger">
+        <div class="bl-shock-lbl">IRS's Embedded Claim</div>
+        <div class="bl-shock-val" id="bl-s-claim"></div>
+        <div class="bl-shock-sub" id="bl-s-claim-sub"></div>
+      </div>
+      <div class="bl-shock danger">
+        <div class="bl-shock-lbl">Year-1 Mandatory Distribution</div>
+        <div class="bl-shock-val" id="bl-s-rmd1"></div>
+        <div class="bl-shock-sub">Required at age <span id="bl-s-rmd-age"></span> — fully taxable income, no exceptions</div>
+      </div>
+      <div class="bl-shock warn">
+        <div class="bl-shock-lbl">10-Year Projected Tax + IRMAA Drain</div>
+        <div class="bl-shock-val" id="bl-s-10yr"></div>
+        <div class="bl-shock-sub">Combined federal, state &amp; Medicare surcharge — if nothing changes</div>
+      </div>
+    </div>
+
+    <!-- Embedded Claim Bar -->
+    <div class="bl-claim-bar-wrap">
+      <div class="bl-claim-bar-title">What Your IRA Is Actually Worth — After Taxes</div>
+      <div class="bl-claim-bar-sub" id="bl-bar-sub"></div>
+      <div class="bl-bar-track">
+        <div class="bl-bar-yours" id="bl-bar-yours"><span id="bl-bar-yours-lbl"></span></div>
+        <div class="bl-bar-irs"   id="bl-bar-irs"  ><span id="bl-bar-irs-lbl"></span></div>
+      </div>
+      <div class="bl-bar-legend">
+        <div class="bl-bar-legend-item"><div class="bl-bar-dot" style="background:#2d7a4f;"></div>Your after-tax share: <strong id="bl-bar-yours-amt"></strong></div>
+        <div class="bl-bar-legend-item"><div class="bl-bar-dot" style="background:#c42b2b;"></div>IRS's embedded claim: <strong id="bl-bar-irs-amt"></strong></div>
+      </div>
+    </div>
+
+    <!-- Kennedy closer -->
+    <div class="bl-kennedy" id="bl-kennedy"></div>
+
+  </div><!-- /bl-body -->
+  <div class="bl-footer">
+    <span>Roth<em style="color:#c07030;font-style:normal;">Rx</em> Blueprint · IRA Baseline Assessment</span>
+    <span>Page 1 · For Discussion Purposes Only · Not Tax or Legal Advice</span>
+  </div>
+</div><!-- /page-bl1 -->
+
+<!-- PAGE 2: The RMD Treadmill -->
+<div class="page" id="page-bl2">
+  <div class="bl-header" style="padding:28px 56px 24px;">
+    <span class="bl-eyebrow">The Mandatory Distribution Schedule · <span id="bl-name-p2"></span></span>
+    <div class="bl-headline" style="font-size:20px;">What the IRS Requires You to Withdraw — Every Single Year</div>
+    <div class="bl-subhead" style="margin-bottom:0;">Required Minimum Distributions grow as your IRA grows. The larger your account, the larger the forced taxable withdrawal — regardless of whether you need the income.</div>
+  </div>
+
+  <div class="bl-body" style="padding-top:20px;">
+    <div class="bl-treadmill-hdr">15-Year RMD Projection · <span id="bl-treadmill-label"></span> · No Conversion Assumed · IRA Growth Based on <span id="bl-treadmill-rate"></span>% Assumed Annual Return</div>
+    <table class="data-tbl" style="margin-top:0;">
+      <thead><tr>
+        <th style="text-align:left;">Year</th>
+        <th>Age</th>
+        <th>IRA Balance (BOY)</th>
+        <th>Required Distribution</th>
+        <th>Fed + State Tax on RMD</th>
+        <th>IRMAA Tier</th>
+        <th>Medicare Surcharge</th>
+        <th>Total Yr Cost</th>
+        <th>IRA After RMD (EOY)</th>
+      </tr></thead>
+      <tbody id="bl-treadmill-body"></tbody>
+    </table>
+
+    <!-- Inheritance block -->
+    <div class="bl-inherit-box" id="bl-inherit-box">
+      <div class="bl-inherit-title">⚠ The SECURE Act 2.0 Inheritance Problem</div>
+      <div class="bl-inherit-body" id="bl-inherit-body"></div>
+    </div>
+
+    <!-- Closing Voss question -->
+    <div class="bl-voss" style="margin-top:20px;margin-bottom:0;font-size:12px;" id="bl-voss-close"></div>
+
+  </div><!-- /bl-body -->
+  <div class="bl-footer">
+    <span>Roth<em style="color:#c07030;font-style:normal;">Rx</em> Blueprint · IRA Baseline Assessment</span>
+    <span>Page 2 · Projected at <span id="bl-footer-rate"></span>% assumed annual return · No conversion · RMD divisors per IRS Uniform Lifetime Table · For Discussion Purposes Only</span>
+  </div>
+</div><!-- /page-bl2 -->
+
+</div><!-- /reportBaseline panel -->
+
+<!-- 1-PAGE REPORT -->
+<div id="report1" class="panel report-area">
+<div class="print-bar">
+  <div class="print-hint">RothRx Blueprint · 1-Page Summary · <span id="r1-client-hint"></span> &nbsp;·&nbsp; <em>Click button → your browser opens Print dialog → select "Save as PDF" as destination</em></div>
+  <button class="print-btn" onclick="printReport('r1')" title="Opens your browser's Print dialog — choose 'Save as PDF' as the destination">⬇ Print / Save as PDF</button>
+</div>
+<div class="page" id="page-r1">
+  <div class="r1-header">
+    <span class="r1-eyebrow">RothRx Blueprint · Prescription for Tax-Free Retirement</span>
+    <div class="r1-headline" id="r1-headline"></div>
+    <div class="r1-subhead">This is what we found. This is what it costs you. And this is the prescription.</div>
+    <div class="client-strip">
+      <div class="cs-item"><span class="cs-label">Client</span><span class="cs-val" id="r1-name"></span></div>
+      <div class="cs-item"><span class="cs-label">Age</span><span class="cs-val" id="r1-age"></span></div>
+      <div class="cs-item"><span class="cs-label">IRA Value</span><span class="cs-val" id="r1-ira"></span></div>
+      <div class="cs-item"><span class="cs-label">Scenario</span><span class="cs-val" id="r1-scenario-badge"></span></div>
+      <div class="cs-item"><span class="cs-label">Prepared</span><span class="cs-val" id="r1-date"></span></div>
+    </div>
+  </div>
+  <div class="r1-body">
+    <div class="voss-block" id="r1-voss"></div>
+    <div class="metrics-3">
+      <div class="metric primary">
+        <span class="m-lbl">Qualified Acct. Advantage — Age 100</span>
+        <div class="m-val" id="r1-m-adv"></div>
+        <div class="m-sub">More with conversion vs. without</div>
+      </div>
+      <div class="metric danger">
+        <span class="m-lbl">Est. IRS's Share of Your IRA</span>
+        <div class="m-val" id="r1-m-tax"></div>
+        <div class="m-sub" id="r1-m-tax-sub"></div>
+      </div>
+      <div class="metric danger">
+        <span class="m-lbl">Year-1 RMD — Age <span id="r1-m-rmd-age"></span></span>
+        <div class="m-val" id="r1-m-rmd"></div>
+        <div class="m-sub">Required whether you need it or not — fully taxable</div>
+      </div>
+      <div class="metric">
+        <span class="m-lbl">Annual IRMAA Cost (Current)</span>
+        <div class="m-val" id="r1-m-irmaa"></div>
+        <div class="m-sub" id="r1-m-irmaa-sub"></div>
+      </div>
+      <div class="metric good">
+        <span class="m-lbl">Indexed Growth Strategy — End of Term</span>
+        <div class="m-val" id="r1-m-roth"></div>
+        <div class="m-sub" id="r1-m-roth-sub"></div>
+      </div>
+      <div class="metric">
+        <span class="m-lbl">Total Conversion Cost</span>
+        <div class="m-val" id="r1-m-cost"></div>
+        <div class="m-sub" id="r1-m-cost-sub"></div>
+      </div>
+    </div>
+    <div class="divider-label"><span>What Happens If You Do Nothing</span></div>
+    <div class="voss-q">
+      <p id="r1-voss-q"></p>
+      <div class="vq-ans" id="r1-voss-q-ans"></div>
+    </div>
+    <div class="rx-block">
+      <h3>The RothRx Prescription — <span id="r1-rx-title"></span></h3>
+      <p id="r1-rx-body"></p>
+    </div>
+    <div class="timeline-4">
+      <div class="tl-item">
+        <div class="tl-age">Age <span id="r1-tl-a1"></span> — Today</div>
+        <div class="tl-val gold" id="r1-tl-v1"></div>
+        <div class="tl-lbl">Conversion Goal · <span id="r1-tl-yr"></span> plan begins</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-age">Age <span id="r1-tl-a2"></span> — Conversion Complete</div>
+        <div class="tl-val" id="r1-tl-v2"></div>
+        <div class="tl-lbl">Total qualified accounts with conversion</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-age">Age 90</div>
+        <div class="tl-val" id="r1-tl-v3"></div>
+        <div class="tl-lbl">Total qualified accounts WITH conversion</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-age">Age 100</div>
+        <div class="tl-val" id="r1-tl-v4"></div>
+        <div class="tl-lbl" id="r1-tl-v4-lbl"></div>
+      </div>
+    </div>
+    <div class="kennedy" id="r1-kennedy"></div>
+    <div class="cta-bar">
+      <div>
+        <div class="cta-text">Your next step takes 20 minutes.</div>
+        <div class="cta-contact">Schedule your RothRx Strategy Session · <span id="r1-cta-contact"></span></div>
+      </div>
+      <div class="cta-badge">Review My Blueprint</div>
+    </div>
+  </div>
+  <div class="r1-footer">
+    <div class="footer-logo">Roth<em>Rx</em> Blueprint · myrothrx.com</div>
+    <div class="footer-disc" id="r1-disc"></div>
+  </div>
+</div>
+</div><!-- /report1 -->
+
+<!-- FULL REPORT -->
+<div id="reportFull" class="panel report-area">
+<div class="print-bar">
+  <div class="print-hint">RothRx Blueprint · Full Report · <span id="rf-client-hint"></span> &nbsp;·&nbsp; <em>Click button → your browser opens Print dialog → select "Save as PDF" as destination</em></div>
+  <button class="print-btn" onclick="printReport('full')" title="Opens your browser's Print dialog — choose 'Save as PDF' as the destination">⬇ Print / Save Full Report as PDF</button>
+</div>
+
+<!-- COVER -->
+<div class="page">
+<div class="cover">
+  <div class="cover-top">
+    <span class="cover-eyebrow">RothRx Blueprint · Tax-Free Retirement Prescription</span>
+    <span class="cover-conf">Confidential · Prepared for client review only</span>
+    <div class="cover-h1" id="rf-cover-h1"></div>
+    <div class="cover-h2" id="rf-cover-h2"></div>
+    <div class="cover-stats">
+      <div class="cstat"><span class="cstat-lbl">IRS Claim Inside Your IRA</span><span class="cstat-val" id="rf-cs1"></span><span class="cstat-sub" id="rf-cs1-sub"></span></div>
+      <div class="cstat"><span class="cstat-lbl">Forced RMD — Age <span id="rf-rmd-age"></span></span><span class="cstat-val" id="rf-cs2"></span><span class="cstat-sub">Taxable. Required. Growing every year.</span></div>
+      <div class="cstat"><span class="cstat-lbl">Annual IRMAA</span><span class="cstat-val" id="rf-cs3"></span><span class="cstat-sub">Eliminated when RMDs drop to zero</span></div>
+    </div>
+  </div>
+  <div class="cover-bottom">
+    <div class="cover-client"><span>Prepared for</span><span id="rf-cover-client"></span></div>
+    <div class="cover-logo-center">Roth<em>Rx</em></div>
+    <div class="cover-meta" id="rf-cover-meta"></div>
+  </div>
+</div>
+</div>
+
+<!-- EXEC SUMMARY -->
+<div class="page pg">
+  <div class="pg-hdr"><h2>Executive Summary</h2><div class="pg-info" id="rf-es-info"></div></div>
+  <div class="pg-body">
+    <div class="voss-lg" id="rf-voss"></div>
+    <div class="metrics-4">
+      <div class="m4 navy"><span class="m4-lbl">Embedded IRS Claim — Total</span><div class="m4-val" id="rf-m1"></div><div class="m4-sub" id="rf-m1-sub"></div></div>
+      <div class="m4"><span class="m4-lbl">Phase 1 Eliminates</span><div class="m4-val gr" id="rf-m2"></div><div class="m4-sub" id="rf-m2-sub"></div></div>
+      <div class="m4"><span class="m4-lbl">Full Conversion Eliminates</span><div class="m4-val gr" id="rf-m3"></div><div class="m4-sub">Zero RMDs · IRMAA drops to Base · <span id="rf-m3-irmaa"></span>/yr saved</div></div>
+      <div class="m4"><span class="m4-lbl">Year-1 Forced RMD</span><div class="m4-val rd" id="rf-m4"></div><div class="m4-sub">Required now. Grows every year.</div></div>
+    </div>
+    <div class="two-panel">
+      <div class="panel-box">
+        <h3>The prescription — phased to fit your bracket</h3>
+        <div class="check-item" id="rf-p1-check"></div>
+        <div class="check-item" id="rf-p2-check"></div>
+        <div class="check-item" id="rf-p3-check"></div>
+        <div class="warn-item" id="rf-p4-warn"></div>
+      </div>
+      <div class="panel-box dark">
+        <h3>The numbers at a glance</h3>
+        <div id="rf-glance-rows"></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--navy);margin-bottom:14px;font-weight:600;">The conversion roadmap — your path to $0 IRS claim</div>
+      <div class="roadmap-3" id="rf-roadmap"></div>
+      <div style="font-size:12px;color:var(--text-light);margin-top:10px;line-height:1.6;" id="rf-roadmap-note"></div>
+    </div>
+  </div>
+  <div class="pg-footer"><div class="pf-logo">Roth<em>Rx</em> Blueprint</div><div class="pf-pg">Page 2 · Executive Summary</div></div>
+</div>
+
+<!-- CONVERSION DETAIL -->
+<div class="page pg">
+  <div class="pg-hdr"><h2 id="rf-conv-title">Conversion Detail</h2><div class="pg-info" id="rf-conv-info"></div></div>
+  <div class="pg-body">
+    <div id="rf-scenario-badge-full"></div>
+    <div class="strat-compare" id="rf-strat-compare"></div>
+    <table class="data-tbl" id="rf-conv-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Year · Age</th>
+        <th>SPX Return</th>
+        <th>Conv Amount</th>
+        <th>IGS Balance <span style="font-size:8px;font-weight:400;color:#aaa">(contribs → P2P at end)</span></th>
+        <th>SMA Roth Bal.</th>
+        <th>Remaining IRA</th>
+        <th>IRA Tax Liability</th>
+        <th>IRMAA Tier</th>
+        <th>Annual IRMAA</th>
+      </tr></thead>
+      <tbody id="rf-conv-body"></tbody>
+    </table>
+    <div id="rf-after-tax-compare" class="print-no-break"></div>
+    <div id="rf-p2p-callout" class="print-no-break"></div>
+    <div class="floor-note print-no-break" id="rf-floor-note"></div>
+    <div class="irmaa-warn print-no-break">
+      <div class="iw-title">⚠ IRMAA <span id="rf-irmaa-tier-note"></span></div>
+      <p id="rf-irmaa-warn-body"></p>
+    </div>
+  </div>
+  <div class="pg-footer"><div class="pf-logo">Roth<em>Rx</em> Blueprint</div><div class="pf-pg">Page 3 · Conversion Detail</div></div>
+</div>
+
+<!-- LIFETIME PROJECTION -->
+<div class="page pg">
+  <div class="pg-hdr"><h2>Lifetime Projection &amp; Opportunity Cost</h2><div class="pg-info" id="rf-lt-info"></div></div>
+  <div class="pg-body">
+    <div style="background:#f0f5ff;border:1px solid #c0d0f0;border-radius:4px;padding:14px 18px;margin-bottom:18px;font-size:12px;color:var(--text-mid);line-height:1.6;" id="rf-lt-banner"></div>
+    <table class="data-tbl" id="rf-lt-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Age</th>
+        <th>Tax-Free Roth</th>
+        <th>Remaining Trad. IRA</th>
+        <th>Tax Liability on IRA</th>
+        <th>Total Wealth</th>
+        <th>Annual RMD</th>
+      </tr></thead>
+      <tbody id="rf-lt-body"></tbody>
+    </table>
+    <div class="insight-3 print-no-break" id="rf-insights"></div>
+    <div id="rf-opp-boxes" class="print-no-break"></div>
+    <div class="kennedy-close">
+      <h3>The prescription is specific. The window is finite.</h3>
+      <p id="rf-kennedy-p1"></p>
+      <p id="rf-kennedy-p2"></p>
+    </div>
+    <div class="sig-row">
+      <div class="sig-left"><strong id="rf-sig-by"></strong><span id="rf-sig-contact"></span></div>
+      <div class="sig-right" id="rf-sig-right"></div>
+    </div>
+    <div class="disc-final" id="rf-disc"></div>
+  </div>
+  <div class="pg-footer"><div class="pf-logo">Roth<em>Rx</em> Blueprint</div><div class="pf-pg">Page 4 · Lifetime Projection</div></div>
+</div>
+
+<!-- DETAIL TABLES PAGE 1a: Account Overview -->
+<div class="page pg">
+  <div class="pg-hdr"><h2>Year-by-Year Detail Tables</h2><div class="pg-info" id="rf-det-info"></div></div>
+  <div class="pg-body">
+    <div class="section-hdr">Account Overview — With Conversion (Strategy A)</div>
+    <div class="section-sub">Beginning-of-year IRA balance, RMDs taken, amount converted, taxes paid, and end-of-year values. ★ = P2P credit applied at term end.</div>
+    <table class="data-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Year</th><th>Age</th><th>BOY IRA</th><th>RMD</th><th>Converted</th><th>Taxes</th><th>EOY IRA</th><th>Roth (IGS)</th><th>Baseline IRA</th>
+      </tr></thead>
+      <tbody id="rf-acct-body"></tbody>
+    </table>
+
+    <div class="section-hdr" style="margin-top:24px;">Baseline — No Conversion</div>
+    <div class="section-sub">Same client, same IRA — no conversions taken. IRA continues to grow, subject to RMDs and full income tax exposure.</div>
+    <table class="data-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Year</th><th>Age</th><th>IRA Balance (No Conv.)</th><th>Annual RMD</th><th>Taxes Paid</th><th>IRMAA</th><th>EOY IRA</th><th>Roth Balance</th>
+      </tr></thead>
+      <tbody id="rf-baseline-body"></tbody>
+    </table>
+  </div>
+  <div class="pg-footer"><div class="pf-logo">Roth<em>Rx</em> Blueprint</div><div class="pf-pg">Page 5 · Account Overview</div></div>
+</div>
+
+<!-- DETAIL TABLES PAGE 1b: Taxable Income -->
+<div class="page pg">
+  <div class="pg-hdr"><h2>Taxable Income Detail</h2><div class="pg-info" id="rf-det-info-b"></div></div>
+  <div class="pg-body">
+    <div class="section-hdr">Taxable Income — With Conversion</div>
+    <div class="section-sub">Each conversion dollar is added to your AGI as ordinary income. The table shows how your marginal bracket changes with the conversion in place.</div>
+    <table class="data-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Year</th><th>Age</th><th>Base AGI</th><th>+ Conversion</th><th>Total AGI</th><th>Std. Deduction</th><th>Taxable Income</th><th>Marginal Bracket</th>
+      </tr></thead>
+      <tbody id="rf-tax-body"></tbody>
+    </table>
+
+    <div class="section-hdr" style="margin-top:24px;">Taxable Income — Without Conversion</div>
+    <div class="section-sub">For comparison: your taxable income and marginal bracket if no conversion were taken. Includes mandatory RMDs from your traditional IRA each year — these are required income regardless of whether you convert.</div>
+    <table class="data-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Year</th><th>Age</th><th>Base AGI</th><th>+ RMD (Required)</th><th>Total AGI</th><th>Std. Deduction</th><th>Taxable Income</th><th>Marginal Bracket</th>
+      </tr></thead>
+      <tbody id="rf-tax-baseline-body"></tbody>
+    </table>
+  </div>
+  <div class="pg-footer"><div class="pf-logo">Roth<em>Rx</em> Blueprint</div><div class="pf-pg">Page 6 · Taxable Income</div></div>
+</div>
+
+<!-- DETAIL TABLES PAGE 2a: IRMAA -->
+<div class="page pg">
+  <div class="pg-hdr"><h2>IRMAA Detail</h2><div class="pg-info" id="rf-det2-info"></div></div>
+  <div class="pg-body">
+    <div class="section-hdr">IRMAA Analysis — With Conversion</div>
+    <div class="section-sub">MAGI = Base AGI + non-taxable Social Security (15% of gross SS). IRMAA inflated at <span id="rf-irmaa-inf-rate"></span>%/year per CBO projections. <span id="rf-irmaa-mfj-note"></span></div>
+    <table class="data-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Year</th><th>Age</th><th>Base AGI</th><th>SS Exempt (Added)</th><th>MAGI</th><th>IRMAA Tier</th><th>Annual IRMAA</th><th>Cumul. IRMAA</th>
+      </tr></thead>
+      <tbody id="rf-irmaa-body"></tbody>
+    </table>
+
+    <div class="section-hdr" style="margin-top:24px;">IRMAA — Without Conversion</div>
+    <div class="section-sub">Your IRMAA tier and annual cost if no conversion is taken. The final column shows the additional IRMAA cost the conversion adds each year.</div>
+    <table class="data-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Year</th><th>Age</th><th>Base AGI</th><th>SS Exempt (Added)</th><th>MAGI (No Conv.)</th><th>IRMAA Tier</th><th>Annual IRMAA</th><th>Extra Cost w/ Conv.</th>
+      </tr></thead>
+      <tbody id="rf-irmaa-baseline-body"></tbody>
+    </table>
+  </div>
+  <div class="pg-footer"><div class="pf-logo">Roth<em>Rx</em> Blueprint</div><div class="pf-pg">Page 7 · IRMAA Analysis</div></div>
+</div>
+
+<!-- DETAIL TABLES PAGE 2b: Annual Conversion Cost Summary -->
+<div class="page pg">
+  <div class="pg-hdr"><h2>Annual Conversion Cost Summary</h2><div class="pg-info" id="rf-det2b-info"></div></div>
+  <div class="pg-body">
+    <div class="section-hdr">What Does the Conversion Cost Each Year?</div>
+    <div class="section-sub">The total annual cost of converting — broken down into federal tax, state tax, and IRMAA — expressed as a percentage of the amount converted. Your pension and SS income are unaffected; these costs are paid from conversion funds or savings. <span style="color:var(--green-light);font-weight:600;">Green ≤ 30%</span> · <span style="color:#a06000;font-weight:600;">Amber 30–40%</span> · <span style="color:var(--red-light);font-weight:600;">Red &gt; 40%</span></div>
+    <table class="data-tbl">
+      <thead><tr>
+        <th style="text-align:left;">Year</th><th>Age</th><th>Amount Converted</th><th>Federal Tax on Conv.</th><th>State Tax on Conv.</th><th>Medicare Surcharge</th><th>Total Annual Cost</th><th>% of Conversion</th>
+      </tr></thead>
+      <tbody id="rf-net-body"></tbody>
+    </table>
+  </div>
+  <div class="pg-footer"><div class="pf-logo">Roth<em>Rx</em> Blueprint</div><div class="pf-pg">Page 8 · Conversion Cost</div></div>
+</div>
+
+</div><!-- /reportFull -->
+
+<script>
+
+// ═══════════════════════════════════════════════════════
+//  UNIFORM LIFETIME TABLE (IRS 2022 updated)
+// ═══════════════════════════════════════════════════════
+const ULT = {70:29.1,71:28.2,72:27.4,73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,
+  78:22.0,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,85:16.0,86:15.2,
+  87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9,
+  96:8.4,97:7.8,98:7.3,99:6.8,100:6.4};
+
+// ═══════════════════════════════════════════════════════
+//  ALL 50 STATES + DC — 2026 INCOME TAX RATES
+//  Note: Some states exempt most retirement/pension income.
+//  Advisor should verify and adjust rate as needed.
+// ═══════════════════════════════════════════════════════
+const STATE_TAXES = {
+  'Alabama': 5.0,          // 5% flat; most pension income exempt
+  'Alaska': 0.0,           // No state income tax
+  'Arizona': 2.5,          // 2.5% flat (2023+)
+  'Arkansas': 3.9,         // 3.9% flat (2024+)
+  'California': 9.3,       // ~9.3% at $200K; top 13.3%
+  'Colorado': 4.4,         // 4.4% flat
+  'Connecticut': 6.99,     // 6.99% top; SS partially exempt
+  'Delaware': 6.6,         // 6.6% top
+  'Florida': 0.0,          // No state income tax
+  'Georgia': 5.49,         // 5.49% flat (reducing annually)
+  'Hawaii': 9.0,           // ~9% at $200K; top 11%
+  'Idaho': 5.8,            // 5.8% flat
+  'Illinois': 4.95,        // 4.95% flat; retirement income largely exempt
+  'Indiana': 3.05,         // 3.05% flat
+  'Iowa': 3.8,             // 3.8% flat (2025+); retirement income exempt
+  'Kansas': 5.58,          // 5.58% top
+  'Kentucky': 4.0,         // 4.0% flat
+  'Louisiana': 3.0,        // 3.0% flat (2025+)
+  'Maine': 7.15,           // 7.15% top
+  'Maryland': 5.75,        // 5.75% top (plus county tax)
+  'Massachusetts': 5.0,    // 5.0% flat
+  'Michigan': 4.25,        // 4.25% flat
+  'Minnesota': 7.85,       // 7.85% at ~$200K; top 9.85%
+  'Mississippi': 4.7,      // 4.7% flat; most retirement income exempt
+  'Missouri': 4.7,         // 4.7% top
+  'Montana': 6.75,         // 6.75% top
+  'Nebraska': 5.84,        // 5.84% top
+  'Nevada': 0.0,           // No state income tax
+  'New Hampshire': 0.0,    // No income tax (dividend/interest tax ended 2025)
+  'New Jersey': 5.53,      // ~5.53% at $200K; top 10.75%
+  'New Mexico': 5.9,       // 5.9% top
+  'New York': 6.85,        // 6.85% at ~$200K; top 10.9%
+  'North Carolina': 4.5,   // 4.5% flat
+  'North Dakota': 2.5,     // 2.5% top
+  'Ohio': 3.75,            // 3.75% top
+  'Oklahoma': 4.75,        // 4.75% top
+  'Oregon': 9.9,           // 9.9% top
+  'Pennsylvania': 3.07,    // 3.07% flat; most retirement income exempt
+  'Rhode Island': 5.99,    // 5.99% top
+  'South Carolina': 6.4,   // 6.4% top
+  'South Dakota': 0.0,     // No state income tax
+  'Tennessee': 0.0,        // No state income tax (Hall Tax ended 2021)
+  'Texas': 0.0,            // No state income tax
+  'Utah': 4.55,            // 4.55% flat
+  'Vermont': 8.75,         // 8.75% top
+  'Virginia': 5.75,        // 5.75% top
+  'Washington': 0.0,       // No income tax (capital gains tax separate)
+  'West Virginia': 5.12,   // 5.12% top (reducing)
+  'Wisconsin': 6.27,       // ~6.27% at $200K; top 7.65%
+  'Wyoming': 0.0,          // No state income tax
+  'District of Columbia': 8.5  // 8.5% at ~$200K; top 10.75%
+};
+
+// ═══════════════════════════════════════════════════════
+//  2026 IRMAA — SINGLE
+//  Thresholds based on 2024 MAGI (2-year lookback)
+// ═══════════════════════════════════════════════════════
+const IRMAA_SINGLE = [
+  {max:109000, tier:'Base',   annual:2993},
+  {max:137000, tier:'Tier 1', annual:4141},
+  {max:171000, tier:'Tier 2', annual:5789},
+  {max:205000, tier:'Tier 3', annual:7435},
+  {max:500000, tier:'Tier 4', annual:8461},
+  {max:Infinity,tier:'Tier 5', annual:9371}
+];
+
+// ═══════════════════════════════════════════════════════
+//  2026 IRMAA — MARRIED FILING JOINTLY
+//  Per-person amounts same; thresholds ~double single
+// ═══════════════════════════════════════════════════════
+const IRMAA_MFJ = [
+  {max:218000, tier:'Base',   annual:2993},
+  {max:274000, tier:'Tier 1', annual:4141},
+  {max:342000, tier:'Tier 2', annual:5789},
+  {max:410000, tier:'Tier 3', annual:7435},
+  {max:750000, tier:'Tier 4', annual:8461},
+  {max:Infinity,tier:'Tier 5', annual:9371}
+];
+
+// ═══════════════════════════════════════════════════════
+//  2026 FEDERAL BRACKETS — SINGLE
+// ═══════════════════════════════════════════════════════
+const FED_BRACKETS_SINGLE = [
+  {min:0,      max:11925,   rate:0.10},
+  {min:11925,  max:48475,   rate:0.12},
+  {min:48475,  max:103350,  rate:0.22},
+  {min:103350, max:197300,  rate:0.24},
+  {min:197300, max:256226,  rate:0.32},
+  {min:256226, max:626350,  rate:0.35},
+  {min:626350, max:Infinity,rate:0.37}
+];
+
+// ═══════════════════════════════════════════════════════
+//  2026 FEDERAL BRACKETS — MARRIED FILING JOINTLY
+// ═══════════════════════════════════════════════════════
+const FED_BRACKETS_MFJ = [
+  {min:0,      max:23850,   rate:0.10},
+  {min:23850,  max:96950,   rate:0.12},
+  {min:96950,  max:206700,  rate:0.22},
+  {min:206700, max:394600,  rate:0.24},
+  {min:394600, max:501050,  rate:0.32},
+  {min:501050, max:751600,  rate:0.35},
+  {min:751600, max:Infinity,rate:0.37}
+];
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+const fmt  = n => '$' + Math.round(Math.abs(n)).toLocaleString();
+const fmtK = n => '$' + Math.round(Math.abs(n)/1000).toLocaleString() + 'K';
+const fmtM = n => '$' + (Math.abs(n)/1000000).toFixed(2) + 'M';
+const fmtPct = n => (n*100).toFixed(1) + '%';
+const pct  = n => (n >= 0 ? '+' : '') + (n*100).toFixed(1) + '%';
+
+function getBrackets(filingStatus) {
+  return filingStatus === 'mfj' ? FED_BRACKETS_MFJ : FED_BRACKETS_SINGLE;
+}
+
+function getIrmaaTable(filingStatus) {
+  return filingStatus === 'mfj' ? IRMAA_MFJ : IRMAA_SINGLE;
+}
+
+function calcFederalTax(taxableIncome, brackets) {
+  let tax = 0;
+  for (const b of brackets) {
+    if (taxableIncome <= b.min) break;
+    const chunk = Math.min(taxableIncome, b.max) - b.min;
+    tax += chunk * b.rate;
+  }
+  return Math.max(0, tax);
+}
+
+function marginalBracket(taxableIncome, brackets) {
+  for (let i = brackets.length - 1; i >= 0; i--) {
+    if (taxableIncome > brackets[i].min) return brackets[i].rate;
+  }
+  return brackets[0].rate;
+}
+
+function calcIRMAA(magi, filingStatus) {
+  const table = getIrmaaTable(filingStatus);
+  for (const t of table) {
+    if (magi <= t.max) return t;
+  }
+  return table[table.length - 1];
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCENARIO DESCRIPTIONS
+// ═══════════════════════════════════════════════════════
+const SCENARIOS = {
+  'A': {
+    label: 'Scenario A — Best Case: Taxes & RMDs Paid from Outside Funds',
+    desc: 'Client has liquid savings (taxable accounts, checking) to pay annual conversion taxes. RMDs are taken but funded from separate sources. The full annual conversion amount enters the Indexed Growth Strategy each year — maximum Roth accumulation.',
+    short: 'A — Full Amount to Roth'
+  },
+  'B': {
+    label: 'Scenario B — Standard: Taxes from Conversion (Most Common)',
+    desc: 'Client pays annual conversion taxes from the converted amount. Net after taxes enters the Indexed Growth Strategy each year. RMDs taken separately from the remaining IRA. Most common scenario for clients without dedicated liquid tax reserves.',
+    short: 'B — Net of Taxes'
+  },
+  'C': {
+    label: 'Scenario C — Conservative: Taxes & Medicare Surcharge from Conversion',
+    desc: 'Client funds both conversion taxes and the annual Medicare surcharge (IRMAA) cost from the converted amount. Net after all conversion-related costs enters the Indexed Growth Strategy. Shows the minimum Roth accumulation when every cost is self-contained.',
+    short: 'C — Net of Taxes + IRMAA'
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  MAIN CALCULATION ENGINE
+// ═══════════════════════════════════════════════════════
+let CALC = {};
+
+function compute() {
+  const inp = getInputs();
+  const brackets = getBrackets(inp.filingStatus);
+  const sp  = inp.spxReturns;
+  const pr  = inp.participation / 100;
+  const fl  = inp.floor / 100;
+  const fee = inp.fee / 100;
+  const pg  = inp.postConvGrowth / 100;
+  const ir  = inp.irmaaInflation / 100;
+  const stR = inp.stateRate / 100;
+  const age0 = inp.age;
+  const iraB  = inp.iraBalance;
+  const annC  = inp.annualConv;
+  const prd   = inp.convPeriod;
+  const stdDed = inp.stdDed;
+  const baseAGI = inp.agi;
+  const ssBrut  = inp.ssBrut;
+  const pension = inp.pension;
+  const investment = inp.investment;
+  const scenario = inp.scenario;
+  const iraGrowthR = inp.iraGrowthRate / 100;
+  const cola = (inp.ssCola || 2.5) / 100;          // SS COLA rate
+  const taxExemptInt = inp.taxExemptInt || 0;       // muni/tax-exempt interest → MAGI only
+
+  // 15% of SS is non-taxable (added to MAGI for IRMAA) — Year-0 values
+  const ssExempt = ssBrut * 0.15;
+  const grossNonIRA = pension + ssBrut + investment;
+
+  // Base MAGI/IRMAA (without conversion, Year 0) — taxExemptInt added for IRMAA
+  const magi0 = baseAGI + ssExempt + taxExemptInt;
+  const baseIRMAA = calcIRMAA(magi0, inp.filingStatus);
+
+  // Conversion MAGI/IRMAA (with conversion, Year 0)
+  const magiWithConv = baseAGI + annC + ssExempt + taxExemptInt;
+  const convIRMAA = calcIRMAA(magiWithConv, inp.filingStatus);
+
+  // Marginal federal rate on conversion (Year 0 — used for embedded claim)
+  const preTaxable = baseAGI - stdDed;
+  const taxBeforeConv = calcFederalTax(preTaxable, brackets);
+  const taxWithConv   = calcFederalTax(preTaxable + annC, brackets);
+  const fedTaxOnConv  = taxWithConv - taxBeforeConv;
+  const stateTaxOnConv = annC * stR;
+  const totalTaxOnConv = fedTaxOnConv + stateTaxOnConv;
+  const effectiveConvRate = totalTaxOnConv / annC;
+
+  // Computed marginal bracket
+  const margRate = marginalBracket(preTaxable + annC, brackets);
+
+  // Est. IRS's Share (full IRA at effective combined rate)
+  const combinedRate = effectiveConvRate;
+  const embeddedClaim = iraB * combinedRate;
+
+  // Year-1 RMD
+  const rmd1 = iraB / (ULT[age0] || 26.5);
+
+  // ══════════════════════════════════════════════════════
+  // v5 CORRECTED CONVERSION PERIOD LOOP
+  // IGS = P2P lump sum at end of term (no annual growth during term)
+  // SMA = year-by-year SPX minus fee
+  // ══════════════════════════════════════════════════════
+  const convYears = [];
+  let igsCumulContribs = 0;  // accumulate contributions only — no growth
+  let smaCumul = 0;
+  let irmaaCumul = 0;
+  let remainingIRA = iraB;   // track full traditional IRA balance
+
+  for (let i = 0; i < prd; i++) {
+    const yr = i + 1;
+    const clientAge = age0 + i;
+    const spxRet = sp[i] !== undefined ? sp[i] : 0;
+
+    // RMD from current remaining IRA balance
+    const div = ULT[clientAge] || 20;
+    const rmdYear = remainingIRA / div;
+
+    // Year-specific SS (COLA-adjusted) — affects taxes and IRMAA
+    const ssBrutY     = ssBrut * Math.pow(1 + cola, i);
+    const ssExemptY   = ssBrutY * 0.15;
+    const agiDeltaSS  = (ssBrutY - ssBrut) * 0.85;   // extra taxable SS income vs year-0
+    const agiY        = baseAGI + agiDeltaSS;
+    const preTaxableY = Math.max(0, agiY - stdDed);
+    const fedTaxY     = calcFederalTax(preTaxableY + annC, brackets) - calcFederalTax(preTaxableY, brackets);
+    const stateTaxY   = annC * stR;
+    const totalTaxY   = fedTaxY + stateTaxY;
+
+    // IRMAA this year — recalculated with COLA-adjusted MAGI (Scenario C needs it first)
+    const magiConvY = agiY + annC + ssExemptY + taxExemptInt;
+    const convIRMAAy = calcIRMAA(magiConvY, inp.filingStatus);
+    const irmaaAmt   = convIRMAAy.annual * Math.pow(1 + ir, i);
+    irmaaCumul += irmaaAmt;
+
+    // Net to Roth based on scenario
+    let ntr;
+    if (scenario === 'A') {
+      ntr = annC;
+    } else if (scenario === 'C') {
+      // Conservative: taxes AND the annual Medicare surcharge (IRMAA) cost are
+      // both funded from the conversion — minimum net enters Roth each year.
+      ntr = Math.max(0, annC - totalTaxY - irmaaAmt);
+    } else {
+      ntr = Math.max(0, annC - totalTaxY);
+    }
+
+    // IGS: accumulate contributions only — P2P credit applied at term end
+    igsCumulContribs += ntr;
+    const isLastYear = (i === prd - 1);
+    const igsCumul = igsCumulContribs; // shows contributions building, no growth yet
+
+    // SMA: actual SPX minus advisory fee (year-by-year growth)
+    smaCumul = (smaCumul + ntr) * (1 + spxRet - fee);
+    if (smaCumul < 0) smaCumul = 0;
+
+    // Remaining traditional IRA: after RMD, conversion — grows at actual SPX (same as comparison period)
+    const iraEOY = (remainingIRA - rmdYear - annC) * (1 + spxRet);
+    const taxLiabilityOnIRA = Math.max(0, remainingIRA) * combinedRate;
+
+    convYears.push({
+      yr, age: clientAge, spxRet, ntr,
+      igsCumul,          // during term: cumulative contributions; see igsTermValue for end
+      isLastYear,
+      smaCumul, rmdYear, totalTaxY, irmaaAmt, irmaaCumul,
+      tier: convIRMAAy.tier, magi: magiConvY,
+      remainingIRA: Math.max(0, remainingIRA),
+      taxLiabilityOnIRA
+    });
+
+    remainingIRA = Math.max(0, iraEOY);
+  }
+
+  // ── v5: P2P lump-sum credit applied to FULL accumulated contributions at term end ──
+  const cumSPXreturn = sp.slice(0, prd).reduce((acc, r) => acc * (1 + r), 1) - 1;
+  const p2pCredit = Math.max(fl, cumSPXreturn * pr);
+  const igsTermValue = igsCumulContribs * (1 + p2pCredit);
+  const igsP2PGain = igsTermValue - igsCumulContribs; // growth that NEVER gets taxed
+  const rothEndTerm = igsTermValue;
+  const smaEndTerm  = smaCumul;
+  const iraRemaining = remainingIRA;
+
+  // Total taxes over conversion period (for cost display)
+  // In Scenario A, "taxes" are out-of-pocket, same dollar amount
+  const totalConvTaxes = totalTaxOnConv * prd;
+  const p1Eliminates = totalConvTaxes;
+
+  // "Without conversion" IRA at end of conversion period — uses same SPX returns for consistency
+  let iraWithout = iraB;
+  for (let i = 0; i < prd; i++) {
+    const a = age0 + i;
+    const div = ULT[a] || 20;
+    const rmd = iraWithout / div;
+    iraWithout = (iraWithout - rmd) * (1 + sp[i]);
+  }
+
+  // ── Lifetime table (starts at end of conversion period) ──
+  const ltStartAge = age0 + prd;
+  const ltRows = [];
+  let rothBal   = rothEndTerm;
+  let iraWithBal = iraRemaining;
+  let iraWoBal   = iraWithout;
+
+  let cumulRMDtaxSavings = 0;
+
+  for (let age = ltStartAge; age <= 100; age++) {
+    const div = ULT[age] || 6.4;
+
+    const rmdWith = iraWithBal / div;
+    const iraWithEOY = (iraWithBal - rmdWith) * (1 + pg);
+    const rothEOY = rothBal * (1 + pg);
+    const totalWith = rothEOY + iraWithEOY;
+    const taxOnRemainingIRA = iraWithEOY * combinedRate;
+
+    const rmdWo = iraWoBal / div;
+    const iraWoEOY = (iraWoBal - rmdWo) * (1 + pg);
+    const totalWo = iraWoEOY;
+
+    const adv = totalWith - totalWo;
+
+    // RMD tax savings: client with Roth has smaller RMD (remaining IRA smaller)
+    const rmdTaxSavings = Math.max(0, (rmdWo - rmdWith) * margRate);
+    cumulRMDtaxSavings += rmdTaxSavings;
+
+    // Milestone: first year Roth alone exceeds original full IRA balance
+    const rothSurpassesOriginal = rothEOY >= iraB;
+
+    ltRows.push({age, rothBal: rothEOY, iraWithBal: iraWithEOY, rmd: rmdWith,
+      totalWith, totalWo, adv, taxOnRemainingIRA, rothSurpassesOriginal,
+      cumulRMDtax: cumulRMDtaxSavings});
+
+    rothBal = rothEOY;
+    iraWithBal = iraWithEOY;
+    iraWoBal = iraWoEOY;
+  }
+
+  const breakEvenRow = ltRows.find(r => r.adv >= 0);
+  const beAge = breakEvenRow ? breakEvenRow.age : null;
+  const lt100 = ltRows.find(r => r.age === 100) || ltRows[ltRows.length - 1];
+
+  // ── Year-by-year detail tables ──
+  const detailRows = [];
+  let iraDetailD = iraB;
+  let rothDetailD = 0;
+  let irmaaCumulD = 0;
+  let iraBaselineD = iraB;
+
+  for (let i = 0; i < prd; i++) {
+    const yr = 2026 + i;
+    const age = age0 + i;
+    const div = ULT[age] || 20;
+    const rmd = iraDetailD / div;
+    const converted = annC;
+    const taxes = totalTaxOnConv;
+    const irmaaAmt = convIRMAA.annual * Math.pow(1 + ir, i);
+    irmaaCumulD += irmaaAmt;
+    const spxRetYear = convYears[i].spxRet;   // use actual SPX for consistency
+    const iraEOY = (iraDetailD - rmd - converted) * (1 + spxRetYear);
+    // In detailRows, show IGS value: contributions during term, P2P value at end
+    rothDetailD = (i === prd - 1) ? igsTermValue : convYears[i].igsCumul;
+    const totalAGI = baseAGI + converted;
+    const taxableInc = totalAGI - stdDed;
+    const bracket = marginalBracket(taxableInc, brackets);
+    const magi = totalAGI + ssExempt;
+    const irmaaTierObj = calcIRMAA(magi, inp.filingStatus);
+    const netInc = grossNonIRA - taxes - irmaaAmt;
+    const pctRetained = netInc / grossNonIRA;
+    const baseRMD = iraBaselineD / div;
+    const baseIRAeoy = (iraBaselineD - baseRMD) * (1 + spxRetYear);  // baseline also uses SPX
+
+    detailRows.push({yr, age, iraDetail: iraDetailD, rmd, converted, taxes,
+      iraEOY, rothDetail: rothDetailD, totalAGI, taxableInc, bracket, magi,
+      ssExempt, irmaaTier: irmaaTierObj.tier, irmaaAmt, irmaaCumulDetail: irmaaCumulD,
+      grossNonIRA, netInc, pctRetained, baselineIRA: iraBaselineD, baseRMD,
+      spxRet: spxRetYear});
+
+    iraDetailD = Math.max(0, iraEOY);
+    iraBaselineD = baseIRAeoy;
+  }
+
+  // Post-conversion 5 years
+  let iraPostD = iraRemaining;
+  let rothPostD = rothEndTerm;
+  let iraBaselinePost = iraWithout;
+  for (let i = 0; i < 5; i++) {
+    const yr = 2026 + prd + i;
+    const age = age0 + prd + i;
+    const div = ULT[age] || 20;
+    const rmd = iraPostD / div;
+    const irmaaAmt = 0;
+    irmaaCumulD += irmaaAmt;
+    const iraEOY = (iraPostD - rmd) * (1 + pg);
+    rothPostD = rothPostD * (1 + pg);
+    const totalAGI = baseAGI;
+    const taxableInc = totalAGI - stdDed;
+    const bracket = marginalBracket(taxableInc, brackets);
+    const magi = totalAGI + ssExempt;
+    const irmaaTierObj = calcIRMAA(magi, inp.filingStatus);
+    const netInc = grossNonIRA;
+    const pctRetained = 1.0;
+    const baseRMD = iraBaselinePost / div;
+    const baseIRAeoy = (iraBaselinePost - baseRMD) * (1 + pg);
+
+    detailRows.push({yr, age, iraDetail: iraPostD, rmd, converted: 0, taxes: 0,
+      iraEOY, rothDetail: rothPostD, totalAGI, taxableInc, bracket, magi,
+      ssExempt, irmaaTier: irmaaTierObj.tier, irmaaAmt, irmaaCumulDetail: irmaaCumulD,
+      grossNonIRA, netInc, pctRetained, baselineIRA: iraBaselinePost, baseRMD, isPost: true});
+
+    iraPostD = Math.max(0, iraEOY);
+    iraBaselinePost = baseIRAeoy;
+  }
+
+  // ── v5: IRMAA Opportunity Cost FV ──
+  // "Savings" = after conversion you have NO RMDs (Roth), so MAGI stays at base income.
+  // Without conversion, the IRA keeps growing and forces RMDs into MAGI each year,
+  // pushing into a higher IRMAA tier. We compare Year 1 post-term to show the gap.
+  const postTermAge = age0 + prd;
+  const postTermDiv = ULT[postTermAge] || 20;
+  const rmdWoPostTerm = iraWithout / postTermDiv;          // first RMD year if never converted
+  const magiWoPostTerm = magi0 + rmdWoPostTerm;            // their MAGI with that RMD added
+  const irmaaWoPostTerm = calcIRMAA(magiWoPostTerm, inp.filingStatus);
+  // With full Roth conversion: no RMD income → MAGI = magi0 → baseIRMAA tier
+  const irmaaSavingsPerYear = Math.max(0, irmaaWoPostTerm.annual - baseIRMAA.annual);
+  const yearsPostConv = Math.max(0, 100 - (age0 + prd));
+  let irmaaSavingsFV = 0;
+  for (let k = 0; k < yearsPostConv; k++) {
+    irmaaSavingsFV += irmaaSavingsPerYear * Math.pow(1 + pg, k);
+  }
+  const irmaaSavingsCumul = irmaaSavingsPerYear * yearsPostConv;
+
+  CALC = {
+    inp, convYears, ltRows, detailRows, beAge, lt100,
+    rothEndTerm, smaEndTerm, igsTermValue, igsP2PGain, igsCumulContribs,
+    p2pCredit, cumSPXreturn,
+    totalConvTaxes, embeddedClaim,
+    rmd1, convIRMAA, baseIRMAA, p1Eliminates, iraRemaining, iraWithout,
+    grossNonIRA, fedTaxOnConv, stateTaxOnConv, totalTaxOnConv, ssExempt,
+    ltStartAge, effectiveConvRate, combinedRate, margRate, brackets,
+    rmdWoPostTerm, irmaaWoPostTerm,
+    irmaaSavingsPerYear, irmaaSavingsFV, irmaaSavingsCumul, yearsPostConv,
+    cumulRMDtaxSavings
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER — 1-PAGE REPORT
+// ═══════════════════════════════════════════════════════
+function renderReport1() {
+  const {inp, convYears, ltRows, lt100, rothEndTerm, smaEndTerm,
+    totalConvTaxes, embeddedClaim, rmd1, convIRMAA, beAge,
+    p1Eliminates, combinedRate, grossNonIRA, margRate} = CALC;
+  const {clientName, age, iraBalance, reportDate, preparedBy, state,
+    spxLabel, convPeriod, annualConv, postConvGrowth, irmaaInflation,
+    scenario, totalConvAmount} = inp;
+
+  const endAge = age + convPeriod;
+  const lt90   = ltRows.find(r => r.age === 90);
+  const lt100r = lt100;
+  const ltEnd  = ltRows.find(r => r.age === endAge) || ltRows[0];
+  const scenInfo = SCENARIOS[scenario];
+  const fedRatePct = Math.round(margRate * 100);
+
+  set('r1-client-hint', clientName);
+  set('r1-headline', `Your ${fmtM(iraBalance)} IRA has an estimated <em>${fmt(embeddedClaim)}</em> IRS's share hiding inside it.`);
+  set('r1-name', clientName);
+  set('r1-age', `${age} · ${inp.filingStatus === 'single' ? 'Single' : 'Married'} · ${state}`);
+  set('r1-ira', fmt(iraBalance));
+  set('r1-scenario-badge', scenInfo.short);
+  set('r1-date', reportDate);
+
+  set('r1-voss', `It seems like you've spent a lifetime building this IRA — and it sounds like no one has ever shown you what the IRS is going to collect from it. <em>Every dollar in that account has never been taxed. Not once.</em> The government is a silent partner in your retirement. They collect when you withdraw, when you take RMDs, and when your children inherit what's left.`);
+
+  set('r1-m-adv', fmt(lt100r.adv));
+  set('r1-m-tax', fmt(embeddedClaim));
+  set('r1-m-tax-sub', `At ${fedRatePct}% federal + ${inp.stateRate}% ${state} combined — the IRS's share`);
+  set('r1-m-rmd-age', age);
+  set('r1-m-rmd', fmt(rmd1));
+  set('r1-m-irmaa', fmt(convIRMAA.annual));
+  set('r1-m-irmaa-sub', `Currently in ${convIRMAA.tier}. Every RMD keeps you here.`);
+  set('r1-m-roth', fmt(rothEndTerm));
+  set('r1-m-roth-sub', `${spxLabel} SPX · ${inp.participation}% participation · ${inp.floor}% floor`);
+  set('r1-m-cost', fmt(totalConvTaxes));
+  set('r1-m-cost-sub', scenario === 'A' ? 'Paid from outside funds — Roth receives full amount each year.' : scenario === 'C' ? 'Taxes + RMD reserve deducted from conversion. Contained within strategy.' : 'Deducted from conversion proceeds. Net amount goes to Roth.');
+
+  set('r1-voss-q', `"How would it feel to know that at age ${endAge} — just ${convPeriod} years from now — your children would inherit a tax bill larger than most people's retirement savings?"`);
+  set('r1-voss-q-ans', `Without a Roth conversion, your ${fmtM(iraBalance)} IRA continues growing — but so does the embedded tax liability. At ${postConvGrowth}% growth, the IRA reaches approximately ${fmtM(iraBalance * Math.pow(1 + postConvGrowth/100, 15))} by age ${age + 15}. The IRS's share at that point: over ${fmtM(iraBalance * Math.pow(1 + postConvGrowth/100, 15) * combinedRate)}. Your heirs face a 10-year forced distribution schedule under the SECURE Act — every dollar taxed at <em>their</em> marginal rate, not yours.`);
+
+  set('r1-rx-title', `${convPeriod} years · ${fmt(annualConv)}/year · ${scenInfo.short}`);
+  set('r1-rx-body', `Convert ${fmt(totalConvAmount || annualConv * convPeriod)} of your IRA into a Roth using the Indexed Growth Strategy — a floor-protected, point-to-point indexed account with zero annual fees and ${inp.participation}% SPX participation. ${scenario === 'A' ? 'Pay ' + fmt(totalConvTaxes) + ' in taxes from outside funds — every dollar of the annual conversion goes directly into the Roth.' : scenario === 'C' ? 'All conversion costs — taxes and RMD reserve — are contained within the strategy.' : 'Pay ' + fmt(totalConvTaxes) + ' in taxes from the conversion proceeds.'} Lock in ${new Date().getFullYear()} brackets before they change. Eliminate the RMD obligation on converted funds. Pass ${fmt(rothEndTerm)} in tax-free wealth to your heirs.`);
+
+  set('r1-tl-a1', age);
+  set('r1-tl-v1', fmt(totalConvAmount || annualConv * convPeriod));
+  set('r1-tl-yr', convPeriod + '-yr');
+  set('r1-tl-a2', endAge);
+  set('r1-tl-v2', ltEnd ? fmt(ltEnd.totalWith) : '—');
+  set('r1-tl-v3', lt90 ? fmt(lt90.totalWith) : '—');
+  set('r1-tl-v4', fmt(lt100r.totalWith));
+  set('r1-tl-v4-lbl', `vs. ${fmt(lt100r.totalWo)} without · ${fmt(lt100r.adv)} advantage`);
+
+  set('r1-kennedy', `<strong>The window to act is this year</strong> — while you're still in the ${fedRatePct}% bracket, before RMDs drive your income higher, and while the Indexed Growth Strategy can capture the next market cycle with zero downside. <strong>The cost of waiting isn't zero. It's one more year of RMDs at ${convIRMAA.tier} IRMAA rates, one more year of taxable growth in your traditional IRA, and one more year your children's inheritance compounds inside a taxable account.</strong>`);
+  set('r1-cta-contact', `taxesrx.com · myrothrx.com`);
+  set('r1-disc', `Based on S&P 500 returns ${spxLabel}. Indexed Growth Strategy: ${inp.participation}% SPX participation, ${inp.floor}% floor, no annual fees. Post-conversion growth: ${postConvGrowth}% net of ${inp.fee}% fee. ${scenInfo.short}. Past performance does not guarantee future results. For illustrative purposes only. Consult a licensed tax advisor.`);
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER — FULL REPORT
+// ═══════════════════════════════════════════════════════
+function renderFullReport() {
+  const {inp, convYears, ltRows, lt100, rothEndTerm, smaEndTerm,
+    igsTermValue, igsP2PGain, igsCumulContribs, p2pCredit, cumSPXreturn,
+    totalConvTaxes, embeddedClaim, rmd1, convIRMAA, baseIRMAA, beAge, p1Eliminates,
+    detailRows, combinedRate, grossNonIRA, fedTaxOnConv, stateTaxOnConv,
+    totalTaxOnConv, ssExempt, ltStartAge, iraRemaining, effectiveConvRate, margRate,
+    brackets, rmdWoPostTerm, irmaaWoPostTerm,
+    irmaaSavingsPerYear, irmaaSavingsFV, yearsPostConv, cumulRMDtaxSavings} = CALC;
+  const {clientName, age, iraBalance, reportDate, preparedBy, state,
+    spxLabel, convPeriod, annualConv, postConvGrowth, irmaaInflation,
+    heirRate, stdDed, scenario, totalConvAmount} = inp;
+
+  // Derived rates needed in detail table loops (these live inside compute() normally)
+  const ir = (irmaaInflation || 7.1) / 100;
+  const pg = (postConvGrowth || 7.0) / 100;
+
+  const endAge = age + convPeriod;
+  const lt90   = ltRows.find(r => r.age === 90);
+  const lt100r = lt100;
+  const p2Amount = iraBalance - annualConv * convPeriod;
+  const p2Taxes  = Math.max(0, embeddedClaim - p1Eliminates);
+  const scenInfo = SCENARIOS[scenario];
+  const fedRatePct = Math.round(margRate * 100);
+
+  // Cover
+  set('rf-client-hint', clientName);
+  set('rf-cover-h1', `The IRS is collecting<br><em>${fmt(rmd1)}</em> from you<br>this year. Whether<br>you need it or not.`);
+  set('rf-cover-h2', `A ${fmt(embeddedClaim)} embedded tax liability.<br>A phased prescription to eliminate it — on your terms, at your rate, under your control.`);
+  set('rf-rmd-age', age);
+  set('rf-cs1', fmt(embeddedClaim));
+  set('rf-cs1-sub', `At ${fedRatePct}% fed + ${inp.stateRate}% ${state}`);
+  set('rf-cs2', fmt(rmd1));
+  set('rf-cs3', fmt(convIRMAA.annual));
+  set('rf-cover-client', clientName);
+  set('rf-cover-meta', `${reportDate}<br>myrothrx.com<br>${preparedBy} · ${state}`);
+
+  // Exec Summary
+  set('rf-es-info', `${clientName} · Age ${age} · ${inp.filingStatus === 'single' ? 'Single' : 'MFJ'} · ${state}<br>IRA: ${fmt(iraBalance)} · ${scenInfo.short} · ${reportDate}`);
+  set('rf-voss', `This year, the IRS will force ${fmt(rmd1)} out of your IRA — whether you need the income or not. Next year it will be more. The year after, more still. That's not a projection. That's the law. And embedded inside your ${fmtM(iraBalance)} IRA is a ${fmt(embeddedClaim)} tax liability that grows <em>every single day you don't address it.</em> The question isn't whether to act. The question is how much of it you eliminate — and how fast.`);
+
+  set('rf-m1', fmt(embeddedClaim));
+  set('rf-m1-sub', `Their share of your ${fmtM(iraBalance)} IRA at ${fmtPct(combinedRate)} combined`);
+  set('rf-m2', fmt(p1Eliminates));
+  set('rf-m2-sub', `${fmt(annualConv * convPeriod)} converted · ${fmt(Math.max(0, embeddedClaim - p1Eliminates))} IRS claim remaining`);
+  set('rf-m3', fmt(embeddedClaim));
+  set('rf-m3-irmaa', fmt(convIRMAA.annual));
+  set('rf-m4', fmt(rmd1));
+
+  set('rf-p1-check', `<strong>Phase 1 — ${fmt(annualConv * convPeriod)} converted over ${convPeriod} years.</strong> ${fmt(annualConv)}/year at ${fedRatePct}%. Taxes paid: ${fmt(totalConvTaxes)} (${scenInfo.short}). Eliminates ${fmt(p1Eliminates)} of the IRS's claim. Roth balance at end of term: ${fmt(rothEndTerm)}. Remaining IRA: ${fmt(Math.max(0, p2Amount))}.`);
+  set('rf-p2-check', `<strong>Phase 2 — Convert the remaining balance.</strong> Additional ${fmt(annualConv)}/year stays in the ${fedRatePct}% bracket. Full elimination of the ${fmt(embeddedClaim)} IRS claim. Traditional IRA RMD obligation eliminated on converted funds. Once fully converted, IRMAA is based on base income only — no RMD income forcing a higher tier.`);
+  set('rf-p3-check', `<strong>The floor protects every tranche.</strong> The Indexed Growth Strategy captures SPX upside at ${inp.participation}% participation with a ${inp.floor}% floor. No annual fees during conversion term. Each annual tranche grows independently.`);
+  set('rf-p4-warn', `<strong>The SECURE Act changes the heir math permanently.</strong> Your children have 10 years to empty the IRA — at their rate. Every dollar converted to Roth today is a dollar they inherit completely tax-free.`);
+
+  const glanceRows = [
+    ['Total IRA value today', fmt(iraBalance), false],
+    ['Est. IRS\'s share (at ' + Math.round(combinedRate*100) + '% combined rate)', fmt(embeddedClaim), true],
+    ['Phase 1 — amount moved to Roth (' + convPeriod + ' yrs)', fmt(annualConv * convPeriod), false],
+    ['Phase 1 — conversion tax cost (' + scenInfo.short + ')', fmt(totalConvTaxes), false],
+    ['Est. IRS\'s share remaining after Phase 1', fmt(Math.max(0, embeddedClaim - p1Eliminates)), false],
+    ['Phase 1 Roth value at end of ' + convPeriod + '-year term', fmt(rothEndTerm), false],
+  ];
+  set('rf-glance-rows', glanceRows.map(([l, val, danger]) =>
+    `<div class="data-row"><span class="dr-lbl">${l}</span><span class="dr-val" ${danger ? 'style="color:var(--red-light);font-weight:700;"' : ''}>${val}</span></div>`
+  ).join(''));
+
+  set('rf-roadmap', `
+    <div class="rm-col">
+      <div class="rm-lbl">Phase 1 — This Plan</div>
+      <div class="rm-amt">${fmt(annualConv * convPeriod)}</div>
+      <div class="rm-detail">${fmt(annualConv)}/yr · ${convPeriod} years · ${fedRatePct}% bracket<br>Taxes: ${fmt(totalConvTaxes)} (${scenInfo.short})<br>IRS claim remaining: <strong style="color:var(--red-light)">${fmt(Math.max(0, embeddedClaim - p1Eliminates))}</strong></div>
+    </div>
+    <div class="rm-col">
+      <div class="rm-lbl">Phase 2 — The Next Conversation</div>
+      <div class="rm-amt">${fmtM(Math.max(0, p2Amount))}</div>
+      <div class="rm-detail">${fmt(annualConv)}/yr · continuing · ${fedRatePct}% bracket<br>IRS claim remaining: <strong style="color:var(--green-light)">$0</strong><br>RMD after full conversion: ~$0/yr</div>
+    </div>
+    <div class="rm-col">
+      <div class="rm-lbl">Full Conversion — Complete Elimination</div>
+      <div class="rm-amt">${fmt(embeddedClaim)}</div>
+      <div class="rm-detail">Est. IRS's share: $0<br>Annual RMD: $0<br>Medicare surcharge drops to Base<br>Annual savings: <strong style="color:var(--gold-light)">${fmt(irmaaSavingsPerYear)}/yr</strong></div>
+    </div>
+  `);
+  set('rf-roadmap-note', `Phase 1 begins the prescription. Phase 2 completes it. The bracket stays at ${fedRatePct}% throughout — the only variable is pace.`);
+
+  // Conversion Detail Page
+  set('rf-conv-title', `${convPeriod}-Year Conversion Detail`);
+  set('rf-conv-info', `${spxLabel} SPX · ${inp.participation}% participation · ${inp.floor}% floor · ${scenInfo.short}`);
+  set('rf-scenario-badge-full', `<div class="scenario-badge"><strong>${scenInfo.label}</strong></div>`);
+
+  // v5: RECOMMENDED vs COMPARISON badges + P2P callout
+  set('rf-strat-compare', `
+    <div class="strat-card igs">
+      <div class="rec-badge">★ RECOMMENDED</div>
+      <h4>Indexed Growth Strategy</h4>
+      <div class="sc-sub">Floor-protected · No annual fees · Point-to-point indexed · P2P credit at term end</div>
+      <div class="sc-val">${fmt(igsTermValue)}</div>
+      <div class="sc-lbl">Roth value — end of ${convPeriod}-year term (P2P lump sum credit applied)</div>
+      <div class="sc-adv" style="margin-top:8px;">$${Math.round(igsP2PGain/1000)}K in growth → IRS share: $0</div>
+    </div>
+    <div class="strat-card sma">
+      <div class="comp-badge">COMPARISON</div>
+      <h4>Structured Market Account</h4>
+      <div class="sc-sub">Market-invested Roth — for comparison only</div>
+      <div class="sc-val">${fmt(smaEndTerm)}</div>
+      <div class="sc-lbl">Roth balance — end of ${convPeriod}-year term</div>
+      <div class="sc-adv" style="color:var(--text-light);">IGS advantage: ${fmt(Math.max(0, igsTermValue - smaEndTerm))} more in tax-free Roth</div>
+    </div>
+  `);
+
+  // v5: New conversion table with remaining IRA + tax liability columns
+  let convBodyHTML = '';
+  convYears.forEach(y => {
+    const spxColor = y.spxRet >= 0 ? 'color:#0F6E56' : 'color:var(--red-light)';
+    const igsRowClass = y.isLastYear ? 'igs-credited' : 'igs-contrib';
+    const igsDisplay = y.isLastYear
+      ? `${fmt(igsTermValue)} <span style="font-size:9px;color:var(--gold);">P2P credited</span>`
+      : `${fmt(y.igsCumul)} <span style="font-size:9px;color:#bbb;">contributions</span>`;
+    const tierClass = (y.tier === 'Tier 4' || y.tier === 'Tier 5') ? 'tier4' : 'tier-base';
+    convBodyHTML += `<tr class="${igsRowClass}">
+      <td>Yr ${y.yr} · Age ${y.age}</td>
+      <td style="${spxColor};text-align:right">${pct(y.spxRet)}</td>
+      <td>${fmt(y.ntr)}</td>
+      <td class="igs" style="text-align:right">${igsDisplay}</td>
+      <td style="text-align:right">${fmt(y.smaCumul)}</td>
+      <td style="text-align:right;color:var(--text-mid)">${fmt(y.remainingIRA)}</td>
+      <td style="text-align:right;color:var(--red-light)">${fmt(y.taxLiabilityOnIRA)}</td>
+      <td class="${tierClass}">${y.tier}</td>
+      <td style="text-align:right;color:var(--red-light)">${fmt(y.irmaaAmt)}</td>
+    </tr>`;
+  });
+  const lastY = convYears[convYears.length - 1];
+  const totalNtr = convYears.reduce((s, y) => s + y.ntr, 0);
+  // Explanatory P2P row — makes it clear what happened at term end
+  convBodyHTML += `<tr style="background:#1a3560;border-top:2px solid var(--gold);">
+    <td colspan="9" style="padding:10px 14px;color:var(--gold);font-size:11px;font-style:italic;text-align:center;">
+      ↑ During the ${convPeriod}-year term, ${fmt(totalNtr)} in contributions built up inside the indexed account — <strong style="color:#fff">no annual growth is credited.</strong>
+      At term end, a single P2P credit is calculated using the participation rate in effect when the account was funded (${inp.participation}% of the cumulative SPX return) and applied to the full ${fmt(igsCumulContribs)} balance → Roth receives <strong style="color:var(--gold)">${fmt(igsTermValue)}</strong> tax-free.
+    </td>
+  </tr>`;
+  convBodyHTML += `<tr class="total-row">
+    <td>End of Term</td>
+    <td style="color:rgba(255,255,255,0.5)">${convPeriod}-yr total</td>
+    <td>${fmt(totalNtr)}</td>
+    <td class="igs" style="color:var(--gold-light);font-weight:700">${fmt(igsTermValue)}</td>
+    <td style="color:rgba(255,255,255,0.8)">${fmt(smaEndTerm)}</td>
+    <td style="color:rgba(255,255,255,0.6)">${fmt(iraRemaining)}</td>
+    <td style="color:#ff9999">${fmt(iraRemaining * combinedRate)}</td>
+    <td colspan="2" style="color:rgba(255,255,255,0.6)">${convPeriod}-yr IRMAA: ${fmt(lastY.irmaaCumul)}</td>
+  </tr>`;
+  set('rf-conv-body', convBodyHTML);
+
+  // v5: After-tax comparison box
+  const rothAdvantage = Math.max(0, igsTermValue - smaEndTerm);
+  const p2pPct = (p2pCredit * 100).toFixed(1);
+  set('rf-after-tax-compare', `
+    <div class="after-tax-compare">
+      <div class="atc-col igs-col">
+        <div class="atc-badge rec">★ Strategy A — Recommended</div>
+        <div class="atc-strat-name">Indexed Growth Strategy</div>
+        <div class="atc-row highlight"><span class="lbl">Roth Value at Term End</span><span class="val">${fmt(igsTermValue)}</span></div>
+        <div class="atc-row"><span class="lbl">Total Contributions</span><span class="val">${fmt(igsCumulContribs)}</span></div>
+        <div class="atc-row"><span class="lbl">P2P Growth Credited (${p2pPct}%)</span><span class="val" style="color:var(--green-light)">${fmt(igsP2PGain)}</span></div>
+        <div class="atc-row"><span class="lbl">Tax on ${fmt(igsP2PGain)} Growth</span><span class="val" style="color:var(--green-light)">$0 — Entire Balance Transfers Into Roth Tax-Free</span></div>
+        <div class="atc-row" style="margin-top:8px;border-top:2px solid #8fc88f;padding-top:8px"><span class="lbl" style="font-weight:700">After-Tax Roth Value</span><span class="val" style="font-size:16px;color:var(--green-light)">${fmt(igsTermValue)}</span></div>
+      </div>
+      <div class="atc-col sma-col">
+        <div class="atc-badge comp">Strategy B — Comparison</div>
+        <div class="atc-strat-name">Structured Market Account</div>
+        <div class="atc-row"><span class="lbl">Roth Value at Term End</span><span class="val">${fmt(smaEndTerm)}</span></div>
+        <div class="atc-row"><span class="lbl">Total Contributions</span><span class="val">${fmt(totalNtr)}</span></div>
+        <div class="atc-row"><span class="lbl">Market Growth</span><span class="val">${fmt(Math.max(0,smaEndTerm - totalNtr))}</span></div>
+        <div class="atc-row"><span class="lbl">Future tax on IRA withdrawals</span><span class="val" style="color:var(--red-light)">At your marginal rate</span></div>
+        <div class="atc-row" style="margin-top:8px;border-top:2px solid #e0dbd0;padding-top:8px"><span class="lbl" style="font-weight:700">After-Tax Roth Value</span><span class="val" style="font-size:16px">${fmt(smaEndTerm)}</span></div>
+      </div>
+      <div class="atc-advantage">
+        <div class="adv-lbl">Strategy A puts more in your Roth — tax-free advantage</div>
+        <div class="adv-val">+${fmt(rothAdvantage)} more</div>
+      </div>
+    </div>
+  `);
+
+  // v5: P2P callout — growth that never gets taxed
+  set('rf-p2p-callout', `
+    <div class="p2p-callout">
+      <div class="pc-title">The Tax-Free Growth Advantage — How IGS Works</div>
+      <div class="pc-body">
+        The Indexed Growth Strategy parks your ${convPeriod}-year contributions (${fmt(igsCumulContribs)} total) inside a floor-protected indexed account.
+        No growth is credited annually — so there is nothing for the IRS to tax during the accumulation period.
+        At term end, the full point-to-point SPX return multiplied by the participation rate is applied as a single P2P credit to the entire balance in one lump sum —
+        and the full <strong>${fmt(igsTermValue)} transfers directly into your Roth IRA, tax-free.</strong>
+        The ${fmt(igsP2PGain)} in growth never appeared in a traditional IRA, never triggered an RMD, and was never subject to income tax.
+      </div>
+    </div>
+  `);
+
+  const downYears = convYears.filter(y => y.spxRet < 0);
+  const bigDownYear = downYears.sort((a, b) => a.spxRet - b.spxRet)[0];
+  if (bigDownYear) {
+    const smaLossThat = bigDownYear.ntr * (1 + bigDownYear.spxRet - fee);
+    set('rf-floor-note', `<p><strong>Why the floor matters (Year ${bigDownYear.yr}):</strong> The S&P 500 dropped ${fmtPct(Math.abs(bigDownYear.spxRet))} in that year. The Structured Market Account lost ground on that year's contribution. The Indexed Growth Strategy credited 0% — no gain, but critically, no loss. Floor protection preserves every contribution.</p>`);
+  } else {
+    set('rf-floor-note', `<p>No negative SPX years in this ${convPeriod}-year period. The floor protection provides a permanent safety net — protecting all accumulated contributions at 0% minimum credit regardless of S&P 500 performance in any given year.</p>`);
+  }
+
+  set('rf-irmaa-tier-note', `${convIRMAA.tier} — ${fmt(convIRMAA.annual)}/Year`);
+  set('rf-irmaa-warn-body', `With ${fmt(inp.agi)} AGI plus ${fmt(annualConv)} in conversions, you're in ${convIRMAA.tier}. Every RMD without a plan keeps you there. A completed Roth conversion reduces future RMDs — and eventually your IRMAA exposure — permanently.`);
+
+  // Lifetime Table
+  set('rf-lt-info', `Ages ${ltStartAge}–100 · ${postConvGrowth}% post-conversion growth · SECURE Act 10-year rule<br>Estate tax: $15M per individual exemption (OBBBA, effective Jan 1, 2026)`);
+  set('rf-lt-banner', `<strong>Projection begins at age ${ltStartAge} — ${convPeriod}-year conversion complete.</strong> Roth starts at ${fmt(rothEndTerm)} — P2P credit applied, tax-free. Remaining traditional IRA: ${fmt(iraRemaining)}. Original full IRA value: ${fmtM(iraBalance)} — milestone shown when Roth alone surpasses this amount.`);
+
+  // v5: New lifetime table — Roth vs original IRA comparison, milestone highlighting
+  let ltBodyHTML = '';
+  const ltSpotAges = new Set([ltStartAge, ltStartAge + 5, ltStartAge + 10, 85, 90, 95, 100]);
+  // Find the milestone age (Roth surpasses original IRA)
+  const milestoneRow = ltRows.find(r => r.rothSurpassesOriginal);
+  if (milestoneRow) ltSpotAges.add(milestoneRow.age);
+
+  ltRows.filter(r => ltSpotAges.has(r.age)).sort((a, b) => a.age - b.age).forEach(r => {
+    const rowClass = r.age % 10 === 0 ? 'highlight-row' : '';
+    const ageDisp = r.age;
+    const iraLiabilityDisplay = r.iraWithBal > 0 ? fmt(r.taxOnRemainingIRA) : '$0';
+    ltBodyHTML += `<tr class="${rowClass}">
+      <td>${ageDisp}</td>
+      <td class="igs" style="font-weight:600">${fmt(r.rothBal)}</td>
+      <td>${fmt(r.iraWithBal)}</td>
+      <td style="color:var(--red-light);font-size:11px">${iraLiabilityDisplay}</td>
+      <td>${fmt(r.totalWith)}</td>
+      <td style="color:#888">${fmt(r.rmd)}</td>
+    </tr>`;
+  });
+  set('rf-lt-body', ltBodyHTML);
+
+  // v5: Insight cards — updated framing, no break-even
+  const milestoneAge = milestoneRow ? milestoneRow.age : '—';
+  set('rf-insights', `
+    <div class="insight-card"><h4>Tax-Free Compounding Advantage</h4><p>At age ${milestoneAge}, your tax-free Roth balance alone exceeds the full original ${fmtM(iraBalance)} IRA — even after converting only ${fmtM(annualConv * convPeriod)}. Every year after, the Roth compounds with zero tax drag, zero RMD pressure, and zero IRMAA exposure from IRA income.</p></div>
+    <div class="insight-card"><h4>Zero RMD Requirement</h4><p>The traditional IRA forces taxable withdrawals every year at increasing amounts. The Roth has no RMD requirement — ever. Zero forced taxable distributions means zero income spikes, zero IRMAA triggers, and zero interference with your tax planning.</p></div>
+    <div class="insight-card"><h4>Qualified Asset Transfer</h4><p>At age 100, total qualified assets with conversion: ${fmt(lt100r.totalWith)} — Roth ${fmt(lt100r.rothBal)} + remaining IRA ${fmt(lt100r.iraWithBal)}. Roth assets transfer to heirs completely tax-free under the 10-year rule. Traditional IRA RMDs that have already been taken are typically reinvested in non-qualified accounts — those pass to heirs with the tax character of wherever they were reinvested.</p></div>
+  `);
+
+  // v5: IRMAA Opportunity Cost + RMD Tax Drag boxes
+  set('rf-opp-boxes', `
+    <div class="opp-boxes">
+      <div class="opp-box irmaa-box">
+        <h4>IRMAA Opportunity Cost — CMS-Verified</h4>
+        <div class="opp-big">${fmt(irmaaSavingsFV)}</div>
+        <div class="opp-lbl">Future value of annual IRMAA savings · ${yearsPostConv} years · ${postConvGrowth}% growth</div>
+        <div class="opp-detail">
+          Without conversion (yr ${convPeriod + 1}+): RMD of ${fmt(rmdWoPostTerm)} added to MAGI → <strong>${irmaaWoPostTerm.tier}</strong> (${fmt(irmaaWoPostTerm.annual)}/yr)<br>
+          With full Roth conversion: no RMDs, MAGI stays at base income → <strong>${baseIRMAA.tier}</strong> (${fmt(baseIRMAA.annual)}/yr)<br>
+          Annual savings: <strong>${fmt(irmaaSavingsPerYear)}/year</strong><br>
+          Compounded at ${postConvGrowth}% over ${yearsPostConv} years = <strong>${fmt(irmaaSavingsFV)}</strong>
+        </div>
+        <div class="opp-source">Source: CMS 2026 Medicare Part B &amp; D premium schedules — published federal rates. All inputs from CMS-published schedules.</div>
+      </div>
+      <div class="opp-box rmd-box">
+        <h4>RMD Tax Drag — IRS-Verified</h4>
+        <div class="opp-big">${fmt(cumulRMDtaxSavings)}</div>
+        <div class="opp-lbl">Cumulative mandatory taxes eliminated · Ages ${ltStartAge}–100</div>
+        <div class="opp-detail">
+          Traditional IRA RMDs are fully taxable — required by law regardless of need.<br>
+          Without conversion: larger RMD base generates higher mandatory taxes each year.<br>
+          Roth IRA: <strong>$0 RMD requirement</strong> — zero forced taxable distributions.<br>
+          Cumulative RMD tax savings through age 100: <strong>${fmt(cumulRMDtaxSavings)}</strong>
+        </div>
+        <div class="opp-source">Source: IRS Uniform Lifetime Table (2022 update), IRC §401(a)(9). Tax at ${Math.round(margRate*100)}% marginal rate.</div>
+      </div>
+    </div>
+  `);
+
+  set('rf-kennedy-p1', `The ${fedRatePct}% bracket you're in today is not guaranteed. Congress has raised rates before and will again. Your RMD in year 3 will be larger than in year 1 — pushing more income into your AGI, locking you deeper into ${convIRMAA.tier} IRMAA, and narrowing the conversion window. The Indexed Growth Strategy captures the next ${convPeriod}-year market cycle with a floor at zero — you participate in the upside, you're protected from the downside, and every dollar that lands in the Roth is there permanently, tax-free.`);
+  set('rf-kennedy-p2', `The question isn't whether the conversion makes sense. The numbers answer that. The question is: <em>who controls the tax rate on your retirement — you, or the IRS?</em>`);
+  set('rf-sig-by', `Prepared by ${preparedBy}`);
+  set('rf-sig-contact', `myrothrx.com · taxesrx.com<br>Schedule your RothRx Strategy Session`);
+  set('rf-sig-right', `${clientName}<br>${reportDate}<br>Confidential — for client use only`);
+  set('rf-disc', `Based on S&P 500 returns ${spxLabel}. Indexed Growth Strategy: ${inp.participation}% SPX participation, ${inp.floor}% floor, no annual fees during conversion term. Post-conversion: ${postConvGrowth}% annualized net of ${inp.fee}% advisory fee. IRMAA inflated at ${irmaaInflation}%/year. Tax scenario: ${scenInfo.short}. Heir tax at ${heirRate}% federal. Estate: $15M exemption per individual (OBBBA Jan 2026). Past performance does not guarantee future results. Illustrative only — not tax, legal, or investment advice. Consult a licensed tax advisor.`);
+
+  // Detail Tables
+  const detInfoText = `${clientName} · Ages ${age}–${age + convPeriod + 4} · All figures illustrative`;
+  set('rf-det-info',  detInfoText);
+  set('rf-det-info-b', detInfoText);
+  set('rf-det2b-info', `${clientName} · IRMAA inflated ${irmaaInflation}%/year · ${inp.filingStatus === 'mfj' ? 'MFJ thresholds' : 'Single filer'}`);
+  set('rf-det2-info', `${clientName} · IRMAA inflated ${irmaaInflation}%/year · ${inp.filingStatus === 'mfj' ? 'MFJ thresholds applied · Per-person IRMAA shown' : 'Single filer thresholds'}`);
+  set('rf-irmaa-inf-rate', irmaaInflation);
+  set('rf-irmaa-mfj-note', inp.filingStatus === 'mfj' ? 'MFJ thresholds used. IRMAA shown per person — multiply by 2 if both spouses on Medicare.' : '');
+
+  // ── ACCOUNT OVERVIEW — With Conversion (Strategy A — IGS) ──
+  // Also build Baseline (No Conversion) table in same pass
+  let acctHTML = '', taxHTML = '', irmaaHTML = '', netHTML = '';
+  let baselineHTML = '', baselineTaxHTML = '', baselineIRMAAHTML = '';
+
+  detailRows.forEach(r => {
+    const rowStyle = r.isPost ? 'background:#fafaf5;' : '';
+    const isLastConvYear = r.converted && !r.isPost && (r.yr === 2026 + convPeriod - 1);
+    // For the IGS Roth column: show "contributions" note during term, "P2P CREDITED" on last year
+    let rothDisplay, rothStyle;
+    if (r.isPost) {
+      rothDisplay = fmt(r.rothDetail);
+      rothStyle = 'color:var(--green-light);font-weight:600;';
+    } else if (r.converted && isLastConvYear) {
+      rothDisplay = `${fmt(r.rothDetail)} ★`;
+      rothStyle = 'color:var(--gold);font-weight:700;font-size:12px;';
+    } else if (r.converted) {
+      rothDisplay = `${fmt(r.rothDetail)} <span style="font-size:9px;color:#bbb">(contribs)</span>`;
+      rothStyle = 'color:#888;';
+    } else {
+      rothDisplay = fmt(r.rothDetail);
+      rothStyle = 'color:var(--green-light);font-weight:600;';
+    }
+
+    // Baseline IRMAA (without conversion) — based on base AGI only (no conversion income)
+    const baseMAGI = inp.agi + ssExempt;
+    const baseIRMAATier = calcIRMAA(baseMAGI, inp.filingStatus);
+    const rowIdx = detailRows.indexOf(r);
+    const baseIRMAAamt = baseIRMAATier.annual * Math.pow(1 + ir, rowIdx);
+    // baseline taxable income (no conversion — just base income, no RMD)
+    const baseTaxableInc = inp.agi - stdDed;
+    const baseBracket = marginalBracket(baseTaxableInc, brackets);
+    // Baseline WITH RMD income (for no-conversion scenario actual tax/IRMAA cost)
+    const baseRMDtaxable = Math.max(0, inp.agi + r.baseRMD - stdDed);
+    const baseRMDbracket = marginalBracket(baseRMDtaxable, brackets);
+    const baseRMDfedTax  = calcFederalTax(baseRMDtaxable, brackets);
+    const baseRMDmagi    = inp.agi + r.baseRMD + ssExempt;
+    const baseRMDirmaa   = calcIRMAA(baseRMDmagi, inp.filingStatus).annual * Math.pow(1 + ir, rowIdx);
+    const baseIRAeoyDisp = Math.max(0, (r.baselineIRA - r.baseRMD) * (1 + (r.spxRet !== undefined ? r.spxRet : pg)));
+
+    acctHTML += `<tr style="${rowStyle}">
+      <td>${r.yr}</td><td>${r.age}</td><td>${fmt(r.iraDetail)}</td><td>${fmt(r.rmd)}</td>
+      <td>${r.converted ? fmt(r.converted) : '—'}</td>
+      <td>${r.taxes ? fmt(r.taxes) : '—'}</td>
+      <td>${fmt(r.iraEOY)}</td>
+      <td style="${rothStyle}">${rothDisplay}</td>
+      <td style="color:var(--text-light)">${fmt(r.baselineIRA)}</td>
+    </tr>`;
+
+    // Baseline (No Conversion) account table — taxes and IRMAA on RMD income
+    baselineHTML += `<tr style="${rowStyle}">
+      <td>${r.yr}</td><td>${r.age}</td>
+      <td style="font-weight:600">${fmt(r.baselineIRA)}</td>
+      <td style="color:var(--red-light)">${r.baseRMD > 0 ? fmt(r.baseRMD) : '—'}</td>
+      <td style="color:var(--red-light)">${r.baseRMD > 0 ? fmt(baseRMDfedTax) : '—'}</td>
+      <td style="color:var(--red-light)">${r.baseRMD > 0 ? fmt(baseRMDirmaa) : '—'}</td>
+      <td>${fmt(baseIRAeoyDisp)}</td>
+      <td style="color:#bbb">$0 (no Roth)</td>
+    </tr>`;
+
+    // Taxable income — WITH conversion
+    taxHTML += `<tr style="${rowStyle}">
+      <td>${r.yr}</td><td>${r.age}</td>
+      <td>${fmt(inp.agi)}</td>
+      <td>${r.converted ? fmt(r.converted) : '—'}</td>
+      <td style="font-weight:600">${fmt(r.totalAGI)}</td>
+      <td>${fmt(stdDed)}</td>
+      <td style="font-weight:600">${fmt(r.taxableInc)}</td>
+      <td style="font-weight:600;color:${r.bracket >= 0.32 ? 'var(--red-light)' : 'var(--text-dark)'};">${(r.bracket * 100).toFixed(0)}%</td>
+    </tr>`;
+
+    // Taxable income — WITHOUT conversion (includes RMD as required income)
+    const baseNoConvTotalAGI = inp.agi + (r.baseRMD || 0);
+    baselineTaxHTML += `<tr style="${rowStyle}">
+      <td>${r.yr}</td><td>${r.age}</td>
+      <td>${fmt(inp.agi)}</td>
+      <td style="color:var(--red-light)">${r.baseRMD > 0 ? fmt(r.baseRMD) : '—'}</td>
+      <td style="font-weight:600">${fmt(baseNoConvTotalAGI)}</td>
+      <td>${fmt(stdDed)}</td>
+      <td style="font-weight:600">${fmt(baseRMDtaxable)}</td>
+      <td style="font-weight:600;color:${baseRMDbracket >= 0.32 ? 'var(--red-light)' : 'var(--text-dark)'};">${(baseRMDbracket * 100).toFixed(0)}%</td>
+    </tr>`;
+
+    // IRMAA — WITH conversion
+    irmaaHTML += `<tr style="${rowStyle}">
+      <td>${r.yr}</td><td>${r.age}</td><td>${fmt(r.totalAGI)}</td>
+      <td>${fmt(r.ssExempt)}</td><td>${fmt(r.magi)}</td>
+      <td class="${r.irmaaTier === 'Tier 4' || r.irmaaTier === 'Tier 5' ? 'tier4' : 'tier-base'}">${r.irmaaTier}</td>
+      <td style="color:var(--red-light)">${r.irmaaAmt ? fmt(r.irmaaAmt) : '—'}</td>
+      <td>${fmt(r.irmaaCumulDetail)}</td>
+    </tr>`;
+
+    // IRMAA — WITHOUT conversion
+    const baseIRMAAtierClass = baseIRMAATier.tier === 'Tier 4' || baseIRMAATier.tier === 'Tier 5' ? 'tier4' : 'tier-base';
+    const extraIRMAACost = r.isPost ? 0 : Math.max(0, (r.irmaaAmt || 0) - baseIRMAAamt);
+    const extraIRMAAStyle = extraIRMAACost > 0 ? 'color:var(--red-light);font-weight:600' : 'color:var(--text-mid)';
+    const extraIRMAADisp  = r.isPost ? '—' : (extraIRMAACost > 0 ? fmt(extraIRMAACost) : '$0');
+    baselineIRMAAHTML += `<tr style="${rowStyle}">
+      <td>${r.yr}</td><td>${r.age}</td>
+      <td>${fmt(inp.agi)}</td>
+      <td>${fmt(ssExempt)}</td>
+      <td>${fmt(baseMAGI)}</td>
+      <td class="${baseIRMAAtierClass}">${baseIRMAATier.tier}</td>
+      <td>${fmt(baseIRMAAamt)}</td>
+      <td style="${extraIRMAAStyle}">${extraIRMAADisp}</td>
+    </tr>`;
+
+    // Annual Conversion Cost (replacing the misleading Net Income table)
+    if (!r.isPost) {
+      const totalConvCost = (r.taxes || 0) + (r.irmaaAmt || 0);
+      const costAsPctOfConversion = r.converted ? totalConvCost / r.converted : 0;
+      const pctStyle = costAsPctOfConversion > 0.4 ? 'color:var(--red-light)' : costAsPctOfConversion > 0.3 ? 'color:#a06000' : 'color:var(--green-light)';
+      netHTML += `<tr style="${rowStyle}">
+        <td>${r.yr}</td><td>${r.age}</td>
+        <td>${r.converted ? fmt(r.converted) : '—'}</td>
+        <td>${r.taxes ? fmt(r.taxes) : '—'}</td>
+        <td>${r.taxes ? fmt(inp.stateRate / 100 * (r.converted || 0)) : '—'}</td>
+        <td>${r.irmaaAmt ? fmt(r.irmaaAmt) : '—'}</td>
+        <td style="font-weight:700">${r.converted ? fmt(totalConvCost) : '—'}</td>
+        <td style="${pctStyle};font-weight:600">${r.converted ? (costAsPctOfConversion * 100).toFixed(1) + '%' : '—'}</td>
+      </tr>`;
+    } else {
+      netHTML += `<tr style="background:#f0fff4;">
+        <td>${r.yr}</td><td>${r.age}</td>
+        <td style="color:var(--green-light)">Conversion Complete</td>
+        <td colspan="5" style="color:var(--green-light);font-weight:600">$0 annual conversion cost · Roth grows tax-free · No RMD requirement</td>
+      </tr>`;
+    }
+  });
+
+  set('rf-acct-body', acctHTML);
+  set('rf-baseline-body', baselineHTML);
+  set('rf-tax-body', taxHTML);
+  set('rf-tax-baseline-body', baselineTaxHTML);
+  set('rf-irmaa-body', irmaaHTML);
+  set('rf-irmaa-baseline-body', baselineIRMAAHTML);
+  set('rf-net-body', netHTML);
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTILITY
+// ═══════════════════════════════════════════════════════
+function set(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+function v(id) { const e = document.getElementById(id); return e ? e.value : ''; }
+
+function getInputs() {
+  const spxInputs = [];
+  document.querySelectorAll('.spx-input').forEach(inp => spxInputs.push(parseFloat(inp.value) / 100 || 0));
+  const totalConvAmount = +v('totalConvAmount') || 0;
+  return {
+    clientName: v('clientName'), age: +v('age'), filingStatus: v('filingStatus'),
+    state: v('state'), stateRate: +v('stateRate'), preparedBy: v('preparedBy'),
+    reportDate: v('reportDate'), pension: +v('pension'), ssBrut: +v('ssBrut'),
+    ssCola: +v('ssCola') || 2.5, taxExemptInt: +v('taxExemptInt') || 0,
+    investment: +v('investment'), wages: +v('wages'), agi: +v('agi'),
+    stdDed: +v('stdDed'), iraBalance: +v('iraBalance'), annualConv: +v('annualConv'),
+    convPeriod: +v('convPeriod'), postConvGrowth: +v('postConvGrowth'),
+    iraGrowthRate: +v('iraGrowthRate') || 7.0,
+    irmaaInflation: +v('irmaaInflation'), heirRate: +v('heirRate'),
+    participation: +v('participation'), floor: +v('floor'), fee: +v('fee'),
+    spxLabel: v('spxLabel'), spxReturns: spxInputs, scenario: v('scenario'),
+    totalConvAmount
+  };
+}
+
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function generate() {
+  compute();
+  renderBaseline();
+  renderReport1();
+  renderFullReport();
+}
+
+// ═══════════════════════════════════════════════════════
+//  BASELINE REPORT
+// ═══════════════════════════════════════════════════════
+function generateBaseline() {
+  compute();         // fills CALC so we can pull inp, brackets, etc.
+  renderBaseline();
+  // Switch to baseline panel
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('reportBaseline').classList.add('active');
+  // Highlight correct nav tab
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(t => { if (t.textContent.trim() === 'Baseline Report') t.classList.add('active'); });
+}
+
+function renderBaseline() {
+  const { inp, rmd1, convIRMAA, baseIRMAA, combinedRate, margRate,
+          embeddedClaim, brackets, ssExempt } = CALC;
+  const { clientName, age, iraBalance, reportDate, filingStatus,
+          state, postConvGrowth, irmaaInflation, stdDed, agi,
+          stateRate, heirRate, ssBrut, ssCola, taxExemptInt } = inp;
+
+  const pg   = (postConvGrowth || 7.0) / 100;
+  const ir   = (irmaaInflation || 7.1) / 100;
+  const stR  = (stateRate || 0) / 100;
+  const cola = (ssCola || 2.5) / 100;
+  const txEx = taxExemptInt || 0;
+  const fedRatePct = Math.round(margRate * 100);
+  const irsShare   = combinedRate;
+  const yourShare  = 1 - irsShare;
+  const yourAmt    = iraBalance * yourShare;
+  const irsAmt     = iraBalance * irsShare;
+
+  // ── Build 15-year baseline projection ──
+  let iraBase = iraBalance;
+  const blRows = [];
+  let tenYrDrain = 0;
+
+  for (let i = 0; i < 15; i++) {
+    const clientAge = age + i;
+    const div = ULT[clientAge] || 6.4;
+    const rmd = iraBase / div;
+    // COLA-adjusted SS this year
+    const ssBrutY   = ssBrut * Math.pow(1 + cola, i);
+    const ssExemptY = ssBrutY * 0.15;
+    const agiDelta  = (ssBrutY - ssBrut) * 0.85;
+    const agiY      = agi + agiDelta;
+    const rmdMagi   = agiY + rmd + ssExemptY + txEx;
+    const rmdTaxable  = Math.max(0, agiY + rmd - stdDed);
+    const baseTaxable = Math.max(0, agiY - stdDed);
+    const fedOnRMD  = Math.max(0, calcFederalTax(rmdTaxable, brackets) - calcFederalTax(baseTaxable, brackets));
+    const stateOnRMD = rmd * stR;
+    const irmaaTier = calcIRMAA(rmdMagi, filingStatus);
+    const irmaaAmt  = irmaaTier.annual * Math.pow(1 + ir, i);
+    const totalCost = fedOnRMD + stateOnRMD + irmaaAmt;
+    const effectiveTaxOnRMD = rmd > 0 ? (fedOnRMD + stateOnRMD) / rmd : 0;
+    const iraEOY = Math.max(0, (iraBase - rmd) * (1 + pg));
+    blRows.push({ yr: new Date().getFullYear() + i, age: clientAge, iraBase, rmd,
+                  fedOnRMD, stateOnRMD, irmaaAmt, totalCost, irmaaTier, iraEOY,
+                  effectiveTaxOnRMD });
+    if (i < 10) tenYrDrain += totalCost;
+    iraBase = iraEOY;
+  }
+
+  const totalRMDs15  = blRows.reduce((s, r) => s + r.rmd, 0);
+  const totalDrain15 = blRows.reduce((s, r) => s + r.totalCost, 0);
+  const totalIRMAA15 = blRows.reduce((s, r) => s + r.irmaaAmt, 0);
+  const ira15EOY     = blRows[blRows.length - 1].iraEOY;
+  const heirTaxRate  = (heirRate || 32) / 100;
+  const heirBill     = ira15EOY * heirTaxRate;
+
+  // ── Render ──
+  set('bl-client-hint', clientName);
+  set('bl-name-eyebrow', clientName);
+  set('bl-name', clientName);
+  set('bl-name-p2', clientName);
+  set('bl-age', `${age} · ${filingStatus === 'single' ? 'Single' : 'Married'} · ${state}`);
+  set('bl-ira-bal', fmt(iraBalance));
+  set('bl-rate', `${fedRatePct}% Fed · ${stateRate}% ${state}`);
+  set('bl-date', reportDate);
+
+  set('bl-headline',
+    `Your <em>${fmt(iraBalance)}</em> IRA already has <em>${fmt(irsAmt)}</em> ` +
+    `set aside for the IRS. <em>They just haven't collected it yet.</em>`);
+
+  set('bl-voss',
+    `"It sounds like you've done everything right — you've saved consistently, ` +
+    `you've been disciplined, and you've built something significant. ` +
+    `What most people in your position don't realize is that every dollar in that IRA ` +
+    `has a silent co-owner. <em>The government hasn't sent you a bill yet — ` +
+    `but they will.</em> The question isn't whether they collect. ` +
+    `The question is how much, and on whose timeline — yours or theirs."`);
+
+  // Shock stats
+  set('bl-s-claim', fmt(irsAmt));
+  set('bl-s-claim-sub', `${Math.round(irsShare * 100)}% of your IRA at ${fedRatePct}% fed + ${stateRate}% ${state} combined effective rate`);
+  set('bl-s-rmd1', fmt(rmd1));
+  set('bl-s-rmd-age', age);
+  set('bl-s-10yr', fmt(tenYrDrain));
+
+  // Bar chart proportions
+  const yourPct = Math.round(yourShare * 100);
+  const irsPct  = Math.round(irsShare  * 100);
+  document.getElementById('bl-bar-yours').style.width = yourPct + '%';
+  document.getElementById('bl-bar-irs').style.width   = irsPct  + '%';
+  set('bl-bar-yours-lbl', yourPct >= 20 ? `You — ${yourPct}%` : '');
+  set('bl-bar-irs-lbl',   irsPct  >= 10 ? `IRS — ${irsPct}%` : '');
+  set('bl-bar-yours-amt', fmt(yourAmt));
+  set('bl-bar-irs-amt',   fmt(irsAmt));
+  set('bl-bar-sub',
+    `Of your ${fmt(iraBalance)} IRA, only ${fmt(yourAmt)} belongs to you after taxes. ` +
+    `The remaining ${fmt(irsAmt)} is an embedded tax liability — it grows every year, ` +
+    `compounding right alongside your account.`);
+
+  set('bl-kennedy',
+    `<strong>Here is what is actually happening to your money right now.</strong> ` +
+    `Your IRA grew ${fmtM ? '' : ''}this year — and so did the IRS's cut. ` +
+    `At age ${age}, the IRS mandates you begin withdrawing ${fmt(rmd1)} this year alone, ` +
+    `whether you need the income or not. That mandatory withdrawal is fully taxable. ` +
+    `It is added to your Social Security, your pension, and everything else you earn — ` +
+    `and it pushes you into a Medicare surcharge tier that costs you ` +
+    `<em>${fmt(convIRMAA.annual)} in additional premiums this year.</em> ` +
+    `Over the next ten years, if nothing changes, this account will cost you ` +
+    `<strong>${fmt(tenYrDrain)}</strong> in combined taxes and Medicare surcharges. ` +
+    `<strong>That is not a projection. That is the math. The only question is what you do with it.</strong>`);
+
+  // Treadmill table
+  set('bl-treadmill-label', `Ages ${age}–${age + 14}`);
+  set('bl-treadmill-rate', postConvGrowth);
+  set('bl-footer-rate', postConvGrowth);
+
+  let tHTML = '';
+  blRows.forEach((r, idx) => {
+    const altStyle = idx % 2 === 1 ? 'background:#fafaf8;' : '';
+    const rmdColor = r.rmd > rmd1 * 1.5 ? 'color:var(--red-light);font-weight:700;' : r.rmd > rmd1 * 1.1 ? 'color:#a06000;font-weight:600;' : '';
+    tHTML += `<tr style="${altStyle}">
+      <td>${r.yr}</td>
+      <td>${r.age}</td>
+      <td>${fmt(r.iraBase)}</td>
+      <td style="${rmdColor}">${fmt(r.rmd)}</td>
+      <td>${fmt(r.fedOnRMD + r.stateOnRMD)}</td>
+      <td class="${r.irmaaTier.tier === 'Tier 4' || r.irmaaTier.tier === 'Tier 5' ? 'tier4' : 'tier-base'}">${r.irmaaTier.tier}</td>
+      <td style="color:var(--red-light)">${fmt(r.irmaaAmt)}</td>
+      <td style="font-weight:700;color:#a52020;">${fmt(r.totalCost)}</td>
+      <td>${fmt(r.iraEOY)}</td>
+    </tr>`;
+  });
+  // Totals row
+  tHTML += `<tr class="bl-totals-row">
+    <td colspan="2">15-Year Totals</td>
+    <td>—</td>
+    <td style="color:#ff9090;">${fmt(totalRMDs15)}</td>
+    <td style="color:#ff9090;">${fmt(blRows.reduce((s,r)=>s+r.fedOnRMD+r.stateOnRMD,0))}</td>
+    <td>—</td>
+    <td style="color:#ff9090;">${fmt(totalIRMAA15)}</td>
+    <td style="color:#ff9090;">${fmt(totalDrain15)}</td>
+    <td>${fmt(ira15EOY)}</td>
+  </tr>`;
+  set('bl-treadmill-body', tHTML);
+
+  // Inheritance block
+  set('bl-inherit-body',
+    `Under the SECURE Act 2.0, most non-spouse beneficiaries must fully distribute ` +
+    `an inherited IRA within <strong>10 years</strong> of the original owner's death — ` +
+    `paying income tax at <strong>their</strong> marginal rate on every dollar. ` +
+    `If your IRA is worth approximately <strong>${fmt(ira15EOY)}</strong> in 15 years ` +
+    `and your heirs are in the <strong>${heirRate || 32}% bracket</strong>, they face a ` +
+    `potential tax bill of <strong>${fmt(heirBill)}</strong> — forced to be paid within a decade, ` +
+    `with no flexibility on timing. ` +
+    `This is not an estate-planning concern. <strong>This is a math problem with a deadline attached to it.</strong>`);
+
+  set('bl-voss-close',
+    `"What would it mean to you — and to your family — if that ${fmt(irsAmt)} the IRS has ` +
+    `claimed as theirs could be redirected? Not avoided, not hidden — just converted ` +
+    `to accounts where the future growth is yours completely, and your heirs inherit ` +
+    `tax-free. That's the conversation. Would it be worth fifteen minutes to see the numbers?"`);
+}
+
+// ═══════════════════════════════════════════════════════
+//  PRINT / PDF
+// ═══════════════════════════════════════════════════════
+function printReport(which) {
+  if (which === 'rb') {
+    compute();
+    renderBaseline();
+  } else {
+    generate(); // ensure latest data
+  }
+  // Switch to correct panel visually for print
+  document.body.setAttribute('data-print', which);
+  window.print();
+}
+window.addEventListener('afterprint', () => {
+  document.body.removeAttribute('data-print');
+});
+
+// ═══════════════════════════════════════════════════════
+//  AUTO-FILL HELPERS
+// ═══════════════════════════════════════════════════════
+function onStateChange() {
+  const sel = document.getElementById('state');
+  const stateName = sel.value;
+  // Extract clean state name (strip "(No Income Tax)" etc.)
+  const cleanName = stateName.replace(/ \(.*\)/, '');
+  const rate = STATE_TAXES[cleanName];
+  if (rate !== undefined) {
+    document.getElementById('stateRate').value = rate;
+  }
+}
+
+function onFilingStatusChange() {
+  const status = v('filingStatus');
+  // Update standard deduction default
+  const stdDedInput = document.getElementById('stdDed');
+  if (status === 'mfj') {
+    stdDedInput.value = 30000; // MFJ ~2026 estimate
+  } else {
+    stdDedInput.value = 18150; // Single 65+ 2026
+  }
+}
+
+function onScenarioChange() {
+  const scenario = v('scenario');
+  const info = SCENARIOS[scenario];
+  if (info) {
+    set('scenario-label', info.label);
+    set('scenario-desc', info.desc);
+  }
+}
+
+function autoCalcPeriod() {
+  const total  = parseFloat(v('totalConvAmount')) || 0;
+  const annual = parseFloat(v('annualConv')) || 1;
+  if (total > 0 && annual > 0) {
+    const period = Math.round(total / annual);
+    document.getElementById('convPeriod').value = Math.max(1, period);
+    document.getElementById('conv-auto-hint').textContent =
+      `$${Math.round(total).toLocaleString()} ÷ $${Math.round(annual).toLocaleString()}/yr = ${Math.max(1, period)} years`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  SPX GRID
+// ═══════════════════════════════════════════════════════
+const DEFAULT_SPX = [
+  {yr:2019, ret:28.9}, {yr:2020, ret:16.3}, {yr:2021, ret:26.9},
+  {yr:2022, ret:-19.4},{yr:2023, ret:24.2}, {yr:2024, ret:23.3}, {yr:2025, ret:16.4}
+];
+
+function buildSpxGrid() {
+  const grid = document.getElementById('spxGrid');
+  grid.innerHTML = '';
+  DEFAULT_SPX.forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'spx-year';
+    div.innerHTML = `<label>${d.yr}</label><input class="spx-input ${d.ret < 0 ? 'neg' : 'pos'}" type="number" step="0.1" value="${d.ret}" oninput="updateSpxColor(this)">`;
+    grid.appendChild(div);
+  });
+}
+
+function updateSpxColor(el) {
+  el.className = `spx-input ${parseFloat(el.value) < 0 ? 'neg' : 'pos'}`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  CLIENT MANAGEMENT
+// ═══════════════════════════════════════════════════════
+
+const CLIENT_STORE_KEY = 'rothrx_clients_v1';
+
+// All form field IDs to save/restore
+const CLIENT_FIELDS = [
+  'clientName','age','filingStatus','state','stateRate','preparedBy','reportDate',
+  'pension','ssBrut','ssCola','taxExemptInt','investment','wages','agi','stdDed',
+  'iraBalance','annualConv','convPeriod','totalConvAmount',
+  'postConvGrowth','iraGrowthRate','irmaaInflation','heirRate',
+  'participation','floor','fee','scenario','spxLabel',
+  'brk32s','brk35s','brk32m','brk35m'
+];
+
+function getClients() {
+  try { return JSON.parse(localStorage.getItem(CLIENT_STORE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function setClients(arr) {
+  localStorage.setItem(CLIENT_STORE_KEY, JSON.stringify(arr));
+}
+
+function captureFormState() {
+  const state = {};
+  CLIENT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) state[id] = el.value;
+  });
+  // SPX returns grid
+  const spxInputs = document.querySelectorAll('.spx-input');
+  state._spx = Array.from(spxInputs).map(el => el.value);
+  return state;
+}
+
+function restoreFormState(state) {
+  CLIENT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && state[id] !== undefined) el.value = state[id];
+  });
+  // SPX grid — rebuild then fill
+  if (state.spxLabel) {
+    const prd = parseInt(state.convPeriod) || 7;
+    buildSpxGrid(prd);
+  }
+  if (state._spx) {
+    const spxInputs = document.querySelectorAll('.spx-input');
+    state._spx.forEach((val, i) => {
+      if (spxInputs[i]) { spxInputs[i].value = val; updateSpxColor(spxInputs[i]); }
+    });
+  }
+  onStateChange();
+  onFilingStatusChange();
+  autoCalcPeriod();
+}
+
+// ── Confirmation dialog ──
+let _confirmCallback = null;
+function showConfirm(icon, title, msg, okLabel, okCls, callback) {
+  document.getElementById('confirmIcon').textContent = icon;
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').innerHTML = msg;
+  const okBtn = document.getElementById('confirmOkBtn');
+  okBtn.textContent = okLabel;
+  okBtn.className = 'confirm-ok ' + (okCls || '');
+  _confirmCallback = callback;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function confirmOk() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+}
+function confirmCancel() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  _confirmCallback = null;
+}
+
+// ── Status message ──
+function setStatus(msg, type) {
+  const el = document.getElementById('clientStatusMsg');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'client-status ' + (type || '');
+  if (type === 'ok') setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 4000);
+}
+
+// ── Refresh dropdown ──
+function refreshRosterDropdown(selectName) {
+  const clients = getClients();
+  const sel = document.getElementById('clientRosterSelect');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Select a saved client —</option>';
+  clients.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.name;
+    const ira = c.data && c.data.iraBalance ? ' · $' + Number(c.data.iraBalance).toLocaleString() : '';
+    opt.textContent = c.name + ira;
+    sel.appendChild(opt);
+  });
+  sel.value = selectName || prev || '';
+  onRosterSelectChange();
+}
+
+function onRosterSelectChange() {
+  const sel = document.getElementById('clientRosterSelect');
+  const delBtn = document.getElementById('deleteClientBtn');
+  if (delBtn) delBtn.disabled = !sel.value;
+}
+
+// ── Save / Update ──
+function saveCurrentClient() {
+  const nameEl = document.getElementById('clientName');
+  const name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { setStatus('Please enter a client name before saving.', 'err'); return; }
+
+  const clients = getClients();
+  const existing = clients.find(c => c.name === name);
+
+  const doSave = () => {
+    const state = captureFormState();
+    const now = new Date().toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'});
+    if (existing) {
+      existing.data = state;
+      existing.savedAt = now;
+    } else {
+      clients.push({ name, data: state, savedAt: now });
+    }
+    setClients(clients);
+    refreshRosterDropdown(name);
+    renderRosterTable();
+    setStatus(`✓ "${name}" saved — ${now}`, 'ok');
+  };
+
+  if (existing) {
+    showConfirm('💾', 'Overwrite Client?',
+      `A client named <strong>${name}</strong> is already saved.<br>Do you want to overwrite it with the current form data?`,
+      'Yes, Overwrite', '', doSave);
+  } else {
+    doSave();
+  }
+}
+
+// ── Load ──
+function loadSelectedClient() {
+  const sel = document.getElementById('clientRosterSelect');
+  if (!sel.value) { setStatus('Select a client from the dropdown first.', 'warn'); return; }
+  const clients = getClients();
+  const client = clients.find(c => c.name === sel.value);
+  if (!client) { setStatus('Client not found.', 'err'); return; }
+  restoreFormState(client.data);
+  setStatus(`✓ "${client.name}" loaded — last saved ${client.savedAt}`, 'ok');
+  generate();
+}
+
+function loadClientByName(name) {
+  const clients = getClients();
+  const client = clients.find(c => c.name === name);
+  if (!client) return;
+  restoreFormState(client.data);
+  // Switch to Calculator tab
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('calc').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => { if (t.textContent.trim().includes('Calculator')) t.classList.add('active'); });
+  document.getElementById('clientRosterSelect').value = name;
+  onRosterSelectChange();
+  setStatus(`✓ "${name}" loaded`, 'ok');
+  generate();
+}
+
+// ── Delete ──
+function deleteSelectedClient() {
+  const sel = document.getElementById('clientRosterSelect');
+  if (!sel.value) return;
+  const name = sel.value;
+  showConfirm('🗑️', 'Delete Client?',
+    `This will permanently remove <strong>${name}</strong> from your saved clients.<br>This cannot be undone.`,
+    'Delete', '', () => {
+      let clients = getClients();
+      clients = clients.filter(c => c.name !== name);
+      setClients(clients);
+      refreshRosterDropdown('');
+      renderRosterTable();
+      setStatus(`"${name}" deleted.`, 'warn');
+    });
+}
+
+// ── New Client ──
+function newClient() {
+  const doNew = () => {
+    // Reset to blank defaults
+    const defaults = {
+      clientName:'', age:'', filingStatus:'single', preparedBy: document.getElementById('preparedBy')?.value || '',
+      reportDate: new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}),
+      pension:'0', ssBrut:'0', ssCola:'2.5', taxExemptInt:'0',
+      investment:'0', wages:'0', agi:'0', stdDed:'15350',
+      iraBalance:'', annualConv:'', convPeriod:'7', totalConvAmount:'',
+      postConvGrowth:'9.15', iraGrowthRate:'7.0', irmaaInflation:'7.1',
+      heirRate:'24', participation:'80', floor:'0', fee:'1.0',
+      scenario:'B', spxLabel:'',
+      brk32s:'197300', brk35s:'256226', brk32m:'394600', brk35m:'501050',
+      _spx: Array(7).fill('0')
+    };
+    restoreFormState(defaults);
+    document.getElementById('clientRosterSelect').value = '';
+    onRosterSelectChange();
+    setStatus('New client form ready. Fill in details and click Save / Update.', 'warn');
+    // Focus client name field
+    setTimeout(() => document.getElementById('clientName')?.focus(), 100);
+  };
+
+  const currentName = document.getElementById('clientName')?.value?.trim();
+  if (currentName) {
+    showConfirm('＋', 'Start New Client?',
+      `Current form has data for <strong>${currentName}</strong>.<br>Make sure you've saved before starting a new client.`,
+      'Start New', '', doNew);
+  } else {
+    doNew();
+  }
+}
+
+function newClientFromRoster() {
+  newClient();
+  // Switch to Calculator tab
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('calc').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => { if (t.textContent.trim().includes('Calculator')) t.classList.add('active'); });
+}
+
+// ── Roster table ──
+function renderRosterTable() {
+  const clients = getClients();
+  const wrap = document.getElementById('rosterTableWrap');
+  const countEl = document.getElementById('rosterCount');
+  if (countEl) countEl.textContent = clients.length + ' client' + (clients.length !== 1 ? 's' : '') + ' saved';
+  if (!wrap) return;
+
+  if (clients.length === 0) {
+    wrap.innerHTML = `<div class="clients-empty"><strong>No clients saved yet</strong>Fill in the Calculator for a client, then click <em>Save / Update</em> in the Client Roster card.</div>`;
+    return;
+  }
+
+  let html = `<table class="roster-tbl">
+    <thead><tr>
+      <th>Client Name</th><th>Age</th><th>IRA Balance</th><th>State</th>
+      <th>Annual Conv.</th><th>Scenario</th><th>Last Saved</th><th>Actions</th>
+    </tr></thead><tbody>`;
+
+  clients.forEach(c => {
+    const d = c.data || {};
+    const ira = d.iraBalance ? '$' + Number(d.iraBalance).toLocaleString() : '—';
+    const conv = d.annualConv ? '$' + Number(d.annualConv).toLocaleString() + '/yr' : '—';
+    html += `<tr>
+      <td class="rt-name">${c.name}</td>
+      <td>${d.age || '—'}</td>
+      <td class="rt-ira">${ira}</td>
+      <td>${d.state ? d.state.replace(/ \(.*\)/,'') : '—'}</td>
+      <td>${conv}</td>
+      <td>${d.scenario ? 'Scenario ' + d.scenario : '—'}</td>
+      <td class="rt-saved">${c.savedAt || '—'}</td>
+      <td class="rt-actions">
+        <button class="rt-btn load" onclick="loadClientByName('${c.name.replace(/'/g,"\\'")}')">Load</button>
+        <button class="rt-btn del"  onclick="deleteClientByName('${c.name.replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function deleteClientByName(name) {
+  showConfirm('🗑️', 'Delete Client?',
+    `This will permanently remove <strong>${name}</strong> from your saved clients.<br>This cannot be undone.`,
+    'Delete', '', () => {
+      let clients = getClients();
+      clients = clients.filter(c => c.name !== name);
+      setClients(clients);
+      refreshRosterDropdown('');
+      renderRosterTable();
+      setStatus(`"${name}" deleted.`, 'warn');
+    });
+}
+
+// ── Export ──
+function exportClients() {
+  const clients = getClients();
+  if (clients.length === 0) { setStatus('No clients to export.', 'warn'); return; }
+  const blob = new Blob([JSON.stringify(clients, null, 2)], {type: 'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'rothrx_clients_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus(`✓ Exported ${clients.length} client${clients.length>1?'s':''}.`, 'ok');
+}
+
+// ── Import ──
+function importClients(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const incoming = JSON.parse(e.target.result);
+      if (!Array.isArray(incoming)) throw new Error('Invalid format');
+      const existing = getClients();
+      const existingNames = existing.map(c => c.name);
+      const dupes = incoming.filter(c => existingNames.includes(c.name)).map(c => c.name);
+
+      const doImport = () => {
+        const merged = [...existing];
+        incoming.forEach(c => {
+          const idx = merged.findIndex(x => x.name === c.name);
+          if (idx >= 0) merged[idx] = c; else merged.push(c);
+        });
+        setClients(merged);
+        refreshRosterDropdown('');
+        renderRosterTable();
+        setStatus(`✓ Imported ${incoming.length} client${incoming.length>1?'s':''}.`, 'ok');
+      };
+
+      if (dupes.length > 0) {
+        showConfirm('⬆', 'Import & Overwrite?',
+          `${incoming.length} client${incoming.length>1?'s':''} found in file.<br><strong>${dupes.length}</strong> already exist and will be overwritten: <em>${dupes.join(', ')}</em>`,
+          'Import & Overwrite', '', doImport);
+      } else {
+        doImport();
+      }
+    } catch(err) {
+      setStatus('Import failed — invalid file format.', 'err');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+buildSpxGrid();
+generate();
+refreshRosterDropdown();
+renderRosterTable();
+</script>
+</body>
+</html>
