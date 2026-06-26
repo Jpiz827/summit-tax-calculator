@@ -1,3 +1,3 @@
 #!/bin/bash
-# Railway start script - properly expands PORT env variable
-exec gunicorn wsgi:app --bind 0.0.0.0:${PORT:-5002}
+# Railway start script - gunicorn on port 5002, Railway proxies to it
+exec gunicorn wsgi:app --bind 0.0.0.0:5002
