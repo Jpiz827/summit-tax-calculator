@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capital Gains Bump Zone Calculator — Summit Tax Services</title>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<title>QCD Benefit Calculator — Summit Tax Services</title>
 <style>
   :root {
     --navy: #0C0E14;
@@ -166,8 +165,8 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .comparison-card.before { border-top: 4px solid var(--green); }
-  .comparison-card.after { border-top: 4px solid var(--red); }
+  .comparison-card.without { border-top: 4px solid var(--red); }
+  .comparison-card.with { border-top: 4px solid var(--green); }
   .metric {
     display: flex;
     justify-content: space-between;
@@ -180,25 +179,25 @@
   .metric .value { font-weight: 700; color: var(--navy); }
   .metric .value.red { color: var(--red); }
   .metric .value.green { color: var(--green); }
-  .bump-zone-highlight {
-    background: linear-gradient(135deg, #FEF3C7, #FEE2E2);
+  .savings-highlight {
+    background: linear-gradient(135deg, #DCFCE7, #BBF7D0);
     border-radius: 12px;
     padding: 24px;
     text-align: center;
     margin-bottom: 24px;
   }
-  .bump-zone-highlight .big-number {
+  .savings-highlight .big-number {
     font-size: 48px;
     font-weight: 800;
-    color: var(--red);
+    color: var(--green);
     line-height: 1;
   }
-  .bump-zone-highlight .label {
+  .savings-highlight .label {
     font-size: 14px;
-    color: #92400E;
+    color: #166534;
     margin-top: 8px;
   }
-  .bump-zone-highlight .sub {
+  .savings-highlight .sub {
     font-size: 16px;
     color: #475569;
     margin-top: 12px;
@@ -221,11 +220,10 @@
   .insight-box h3 { color: #1E40AF; margin-bottom: 8px; font-size: 17px; }
   .strategy-cards {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 16px;
     margin-bottom: 24px;
   }
-  @media (max-width: 700px) { .strategy-cards { grid-template-columns: 1fr; } }
   .strategy-card {
     background: var(--card-bg);
     border-radius: 12px;
@@ -252,28 +250,53 @@
     color: var(--gray);
     font-size: 13px;
   }
+  .key-insight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 600px) { .key-insight-grid { grid-template-columns: 1fr; } }
+  .key-insight-item {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  .key-insight-item .amount {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1.2;
+  }
+  .key-insight-item .amount.red { color: var(--red); }
+  .key-insight-item .desc {
+    font-size: 13px;
+    color: #64748B;
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>Capital Gains <span>Bump Zone</span> Calculator</h1>
-  <p>See how selling stocks or real estate can trigger a hidden "double tax" — your capital gains push more Social Security into taxable income, costing you far more than you think.</p>
+  <h1>QCD <span>Benefit</span> Calculator</h1>
+  <p>See how a Qualified Charitable Distribution from your IRA can reduce your AGI, lower the taxes on your Social Security, and potentially save you from IRMAA surcharges — all at once.</p>
 </div>
 
 <div class="nav">
   <a href="/">Home</a>
   <a href="/ss-calculator">SS Claiming</a>
   <a href="/torpedo-calculator">Tax Torpedo</a>
-  <a href="/capital-gains" class="active">CG Bump Zone</a>
-  <a href="/widow-tax-hit">Widow Tax Hit</a>
-  <a href="/qcd-benefit">QCD Benefit</a>
+  <a href="/capital-gains">CG Bump Zone</a>
+  <a href="/qcd-benefit" class="active">QCD Benefit</a>
 </div>
 
 <div class="container">
 
-  <div class="alert-box red">
-    <strong>⚠ The Hidden Tax Trap:</strong> You think your capital gains are taxed at 0% or 15%? Think again. When capital gains push more of your Social Security into taxable income, the <em>effective</em> rate on those gains can be 2–3× higher than the nominal rate. This calculator reveals the real cost.
+  <div class="alert-box">
+    <strong>💡 The QCD Advantage:</strong> A Qualified Charitable Distribution sends your RMD directly from your IRA to charity — it's excluded from AGI entirely. Unlike taking the RMD and itemizing a deduction, the QCD reduces your AGI, which means less of your Social Security is taxable and you may avoid IRMAA surcharges. This calculator shows the real savings.
   </div>
 
   <div class="card">
@@ -281,19 +304,19 @@
     <div class="form-grid">
       <div class="form-group">
         <label>Annual Social Security (combined if married)</label>
-        <input type="number" id="ss_benefit" value="48000" step="1" min="0">
+        <input type="number" id="ss_benefit_annual" value="48000" step="1" min="0">
       </div>
       <div class="form-group">
-        <label>Other Retirement Income (pensions, IRA distributions, etc.)</label>
+        <label>Other Income (pensions, etc.)</label>
         <input type="number" id="other_income" value="40000" step="1" min="0">
       </div>
       <div class="form-group">
-        <label>Capital Gain You're Considering</label>
-        <input type="number" id="capital_gain" value="50000" step="1" min="0">
+        <label>Your RMD Amount</label>
+        <input type="number" id="rmd_amount" value="20000" step="1" min="0">
       </div>
       <div class="form-group">
-        <label>Tax-Exempt Interest (muni bonds)</label>
-        <input type="number" id="tax_exempt" value="0" step="1" min="0">
+        <label>QCD Amount (to charity)</label>
+        <input type="number" id="qcd_amount" value="10000" step="1" min="0">
       </div>
       <div class="form-group">
         <label>Filing Status</label>
@@ -303,65 +326,54 @@
         </select>
       </div>
       <div class="form-group">
-        <label>&nbsp;</label>
-        <div style="padding-top:28px; color:#64748B; font-size:14px;">All figures are annual</div>
+        <label>Tax-Exempt Interest</label>
+        <input type="number" id="tax_exempt_interest" value="0" step="1" min="0">
       </div>
     </div>
-    <button class="btn-primary" onclick="calculate()">Reveal the Real Cost →</button>
+    <button class="btn-primary" onclick="calculate()">Calculate QCD Benefit →</button>
   </div>
 
   <div id="results" class="results">
 
-    <div class="bump-zone-highlight" id="bump-highlight">
-      <div class="label">YOUR EFFECTIVE CAPITAL GAINS RATE</div>
-      <div class="big-number" id="effective-rate">—</div>
-      <div class="sub" id="bump-explanation"></div>
+    <div class="savings-highlight" id="savings-highlight">
+      <div class="label">YOUR TOTAL SAVINGS WITH QCD</div>
+      <div class="big-number" id="total-savings">—</div>
+      <div class="sub" id="savings-explanation"></div>
     </div>
 
     <div class="comparison-grid">
-      <div class="comparison-card before">
-        <h3>✅ Before the Capital Gain</h3>
-        <div id="before-metrics"></div>
+      <div class="comparison-card without">
+        <h3>❌ Without QCD</h3>
+        <div id="without-metrics"></div>
       </div>
-      <div class="comparison-card after">
-        <h3>❌ After the Capital Gain</h3>
-        <div id="after-metrics"></div>
+      <div class="comparison-card with">
+        <h3>✅ With QCD</h3>
+        <div id="with-metrics"></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>The Bump Zone Chart</h2>
-      <p style="color:#64748B; margin-bottom:16px; font-size:15px;">See how the effective rate on capital gains spikes as the gain increases — the "bump zones" where your real tax rate jumps far above the nominal rate.</p>
-      <div class="chart-container">
-        <div id="bump-chart"></div>
-      </div>
+      <h2>Key Savings Breakdown</h2>
+      <div class="key-insight-grid" id="key-insights"></div>
     </div>
 
     <div class="insight-box">
-      <h3>💡 Why This Happens</h3>
-      <p>Capital gains are added to your <strong>Adjusted Gross Income (AGI)</strong>. AGI determines how much of your Social Security is taxable — not through a deduction, but through the <strong>provisional income</strong> formula. When a capital gain pushes your provisional income above $44,000 (MFJ) or $34,000 (single), up to 85¢ of every dollar of SS becomes taxable. The extra SS tax is the "bump zone" penalty — a hidden second layer of tax on your gains.</p>
+      <h3>💡 Why QCD Beats Itemizing</h3>
+      <p>QCD is excluded from AGI entirely, while a charitable deduction only reduces taxable income. This matters because lower AGI means less of your Social Security is taxable. A deduction helps after AGI is calculated; a QCD helps before. The result: a QCD can save you far more than an equal charitable deduction, especially when it keeps you below the IRMAA threshold or reduces the percentage of your Social Security that gets taxed.</p>
     </div>
 
     <div class="strategy-cards">
       <div class="strategy-card">
-        <h4>🔄 Spread the Gain</h4>
-        <p>Realize large gains over 2–3 years instead of all at once. This can keep you below the 85% SS threshold each year, saving thousands in bump-zone taxes.</p>
-      </div>
-      <div class="strategy-card">
-        <h4>🏠 Harvest Losses</h4>
-        <p>Sell losing investments to offset gains. Tax-loss harvesting reduces the net gain, potentially keeping you below the bump zone entirely.</p>
-      </div>
-      <div class="strategy-card">
-        <h4>📦 Roth Conversion First</h4>
-        <p>Do Roth conversions in low-income years before selling assets. Lower RMDs = lower AGI = more room for capital gains before hitting the bump zone.</p>
+        <h4>🎯 Why QCD Beats Itemizing</h4>
+        <p>A QCD is excluded from AGI entirely, while a charitable deduction only reduces taxable income after AGI is calculated. Lower AGI means less Social Security is taxable and potentially lower IRMAA premiums. The QCD wins on two fronts — not one.</p>
       </div>
     </div>
 
     <!-- Email My Report Section -->
     <div id="emailReportSection" class="email-report-section">
         <h3>📧 Get Your Detailed Report</h3>
-        <p>We'll email you a personalized 4-page analysis with your numbers, strategy recommendations, and next steps.</p>
-        <input type="hidden" id="emailReportCalc" value="capital-gains">
+        <p>We'll email you a personalized analysis with your QCD savings numbers, strategy recommendations, and next steps.</p>
+        <input type="hidden" id="emailReportCalc" value="qcd-benefit">
         <div class="email-input-row">
             <input type="email" id="emailReportInput" placeholder="your@email.com">
             <button id="emailSendBtn" class="email-send-btn" onclick="sendReportEmail()">SEND MY REPORT →</button>
@@ -370,8 +382,8 @@
     </div>
 
     <div class="cta-box">
-      <h3>Don't Let the Bump Zone Surprise You</h3>
-      <p>A capital gains sale you think will cost 0% or 15% could cost you 9%, 18%, or even 27%+ in combined federal taxes. Get a personalized strategy session to protect your retirement income.</p>
+      <h3>Want to see how a QCD strategy fits your numbers?</h3>
+      <p>Schedule a free consultation and we'll run the numbers together.</p>
       <button class="btn-primary" onclick="window.location.href='/torpedo-calculator'">See the Full Tax Torpedo →</button>
     </div>
 
@@ -379,7 +391,7 @@
 </div>
 
 <footer>
-  &copy; 2026 Summit Tax Services — Capital Gains Bump Zone Calculator<br>
+  &copy; 2026 Summit Tax Services — QCD Benefit Calculator<br>
   <small>For educational purposes. Consult a tax professional for personal advice.</small>
 </footer>
 
@@ -455,29 +467,25 @@ async function sendReportEmail() {
 }
 
 function formatMoney(n) {
-  return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function formatPct(n) {
+  return Number(n).toFixed(1) + '%';
 }
 
 function calculate() {
   const data = {
-    ss_benefit_monthly: parseFloat(document.getElementById('ss_benefit').value) / 12,
+    ss_benefit_annual: parseFloat(document.getElementById('ss_benefit_annual').value),
     other_income: parseFloat(document.getElementById('other_income').value),
-    capital_gain: parseFloat(document.getElementById('capital_gain').value),
+    rmd_amount: parseFloat(document.getElementById('rmd_amount').value),
+    qcd_amount: parseFloat(document.getElementById('qcd_amount').value),
     filing: document.getElementById('filing').value,
-    tax_exempt_interest: parseFloat(document.getElementById('tax_exempt').value),
+    tax_exempt_interest: parseFloat(document.getElementById('tax_exempt_interest').value),
   };
-  // We send annual SS directly
-  data.ss_benefit_annual = parseFloat(document.getElementById('ss_benefit').value);
-  delete data.ss_benefit_monthly;
-  lastCalcInputs = {
-    ss_benefit_annual: data.ss_benefit_annual,
-    other_income: data.other_income,
-    capital_gain: data.capital_gain,
-    filing: data.filing,
-    tax_exempt_interest: data.tax_exempt_interest,
-  };
+  lastCalcInputs = {...data};
 
-  fetch('/api/capital-gains', {
+  fetch('/api/qcd-benefit', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(data),
@@ -491,109 +499,66 @@ function calculate() {
     lastCalcResults = result;
     showEmailReport();
 
-    // Big number highlight
-    document.getElementById('effective-rate').textContent = result.effective_cg_rate + '%';
-    const nominal = result.nominal_cg_rate;
-    const bump = result.bump_zone_penalty;
-    let explanation = `Nominal rate: ${nominal}%. Bump zone penalty: +${bump}% hidden tax due to Social Security cascading.`;
-    if (bump > 10) {
-      explanation += ' This is a SEVERE bump zone — get professional help before selling.';
-    } else if (bump > 3) {
-      explanation += ' A moderate bump zone — consider spreading the gain.';
+    // Big savings highlight
+    document.getElementById('total-savings').textContent = formatMoney(result.total_savings);
+    let explanation = `You save ${formatMoney(result.total_savings)} by using a QCD instead of taking the full RMD as income.`;
+    if (result.irmaa_savings > 0) {
+      explanation += ` This includes ${formatMoney(result.irmaa_savings)} in IRMAA premium savings.`;
     }
-    document.getElementById('bump-explanation').textContent = explanation;
+    document.getElementById('savings-explanation').textContent = explanation;
 
-    // Before metrics
-    const beforeHTML = `
-      <div class="metric"><span class="label">AGI</span><span class="value">${formatMoney(result.agi_before)}</span></div>
-      <div class="metric"><span class="label">Provisional Income</span><span class="value">${formatMoney(result.pi_before)}</span></div>
-      <div class="metric"><span class="label">SS Taxable</span><span class="value">${formatMoney(result.ss_taxable_before)} (${result.ss_pct_before}%)</span></div>
-      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.total_income_before)}</span></div>
-      <div class="metric"><span class="label">Federal Tax</span><span class="value">${formatMoney(result.fed_tax_before)}</span></div>
-      <div class="metric"><span class="label">Effective Rate</span><span class="value">${result.effective_rate_before}%</span></div>
+    // Without QCD metrics
+    const withoutHTML = `
+      <div class="metric"><span class="label">AGI</span><span class="value red">${formatMoney(result.without_qcd.agi)}</span></div>
+      <div class="metric"><span class="label">SS Taxable</span><span class="value red">${formatMoney(result.without_qcd.ss_taxable)} (${formatPct(result.without_qcd.ss_pct_taxable)})</span></div>
+      <div class="metric"><span class="label">SS % Taxable</span><span class="value red">${formatPct(result.without_qcd.ss_pct_taxable)}</span></div>
+      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.without_qcd.total_income)}</span></div>
+      <div class="metric"><span class="label">Federal Tax</span><span class="value red">${formatMoney(result.without_qcd.federal_tax)}</span></div>
+      <div class="metric"><span class="label">IRMAA Premium</span><span class="value red">${formatMoney(result.without_qcd.irmaa_premium)}</span></div>
     `;
-    document.getElementById('before-metrics').innerHTML = beforeHTML;
+    document.getElementById('without-metrics').innerHTML = withoutHTML;
 
-    // After metrics
-    const afterHTML = `
-      <div class="metric"><span class="label">AGI</span><span class="value red">${formatMoney(result.agi_after)}</span></div>
-      <div class="metric"><span class="label">Provisional Income</span><span class="value red">${formatMoney(result.pi_after)}</span></div>
-      <div class="metric"><span class="label">SS Taxable</span><span class="value red">${formatMoney(result.ss_taxable_after)} (${result.ss_pct_after}%)</span></div>
-      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.total_income_after)}</span></div>
-      <div class="metric"><span class="label">Federal Tax</span><span class="value red">${formatMoney(result.fed_tax_after)}</span></div>
-      <div class="metric"><span class="label">Tax Increase</span><span class="value red">+${formatMoney(result.tax_increase)}</span></div>
-      <div class="metric"><span class="label">Extra SS Taxed</span><span class="value red">+${formatMoney(result.additional_ss_taxable)}</span></div>
+    // With QCD metrics
+    const withHTML = `
+      <div class="metric"><span class="label">AGI</span><span class="value green">${formatMoney(result.with_qcd.agi)}</span></div>
+      <div class="metric"><span class="label">SS Taxable</span><span class="value green">${formatMoney(result.with_qcd.ss_taxable)} (${formatPct(result.with_qcd.ss_pct_taxable)})</span></div>
+      <div class="metric"><span class="label">SS % Taxable</span><span class="value green">${formatPct(result.with_qcd.ss_pct_taxable)}</span></div>
+      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.with_qcd.total_income)}</span></div>
+      <div class="metric"><span class="label">Federal Tax</span><span class="value green">${formatMoney(result.with_qcd.federal_tax)}</span></div>
+      <div class="metric"><span class="label">IRMAA Premium</span><span class="value green">${formatMoney(result.with_qcd.irmaa_premium)}</span></div>
     `;
-    document.getElementById('after-metrics').innerHTML = afterHTML;
+    document.getElementById('with-metrics').innerHTML = withHTML;
 
-    // Render chart
-    renderChart(data);
+    // Key insights grid
+    const insightsHTML = `
+      <div class="key-insight-item">
+        <div class="amount green">${formatMoney(result.tax_savings)}</div>
+        <div class="desc">Federal Tax Savings</div>
+      </div>
+      <div class="key-insight-item">
+        <div class="amount green">${formatMoney(result.ss_tax_savings)}</div>
+        <div class="desc">SS Tax Savings</div>
+      </div>
+      <div class="key-insight-item">
+        <div class="amount green">${formatMoney(result.irmaa_savings)}</div>
+        <div class="desc">IRMAA Savings</div>
+      </div>
+      <div class="key-insight-item">
+        <div class="amount green">${formatMoney(result.total_savings)}</div>
+        <div class="desc">Total Savings</div>
+      </div>
+      <div class="key-insight-item">
+        <div class="amount green">${formatPct(result.effective_savings_rate)}</div>
+        <div class="desc">Effective Savings Rate</div>
+      </div>
+    `;
+    document.getElementById('key-insights').innerHTML = insightsHTML;
 
     // Scroll to results
     document.getElementById('results').scrollIntoView({behavior: 'smooth'});
-  });
-}
-
-function renderChart(inputData) {
-  // Generate chart data by requesting from API
-  fetch('/api/cg-bump-chart', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      ss_benefit_annual: inputData.ss_benefit_annual,
-      other_income: inputData.other_income,
-      filing: inputData.filing,
-      tax_exempt_interest: inputData.tax_exempt_interest,
-    }),
   })
-  .then(r => {
-    if (!r.ok) throw new Error('Chart error ' + r.status);
-    return r.json();
-  })
-  .then(data => {
-    const gains = data.chart_data.map(d => d.capital_gain);
-    const effectiveRates = data.chart_data.map(d => d.effective_rate);
-    const nominalRates = data.chart_data.map(d => d.nominal_rate);
-
-    const trace1 = {
-      x: gains,
-      y: effectiveRates,
-      name: 'Effective Rate (with SS cascading)',
-      type: 'scatter',
-      mode: 'lines',
-      line: {color: '#C0392B', width: 3},
-      fill: 'tozeroy',
-      fillcolor: 'rgba(192,57,43,0.1)',
-    };
-    const trace2 = {
-      x: gains,
-      y: nominalRates,
-      name: 'Nominal CG Rate',
-      type: 'scatter',
-      mode: 'lines',
-      line: {color: '#94A3B8', width: 2, dash: 'dash'},
-    };
-
-    const layout = {
-      title: 'The Capital Gains Bump Zone: Your Real Tax Rate',
-      xaxis: {title: 'Capital Gain Amount', tickprefix: '$', tickformat: ',.0f'},
-      yaxis: {title: 'Effective Tax Rate (%)', ticksuffix: '%'},
-      legend: {orientation: 'h', y: -0.15},
-      margin: {t: 40, b: 60, l: 60, r: 20},
-      paper_bgcolor: 'white',
-      plot_bgcolor: '#F8FAFC',
-      font: {size: 14, color: '#334155'},
-      annotations: [{
-        x: gains[Math.floor(gains.length/2)],
-        y: effectiveRates[Math.floor(effectiveRates.length/2)],
-        text: '← The BUMP ZONE: Your real rate',
-        showarrow: false,
-        font: {color: '#C0392B', size: 12},
-        yshift: 15,
-      }],
-    };
-
-    Plotly.newPlot('bump-chart', [trace1, trace2], layout, {responsive: true});
+  .catch(err => {
+    alert('Error calculating QCD benefit: ' + err.message);
   });
 }
 </script>

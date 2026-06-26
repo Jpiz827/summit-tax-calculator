@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capital Gains Bump Zone Calculator — Summit Tax Services</title>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<title>Widow Tax Hit Calculator — Summit Tax Services</title>
 <style>
   :root {
     --navy: #0C0E14;
@@ -203,13 +202,6 @@
     color: #475569;
     margin-top: 12px;
   }
-  .chart-container {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 24px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
   .insight-box {
     background: #EFF6FF;
     border-left: 4px solid #3B82F6;
@@ -219,22 +211,44 @@
     font-size: 15px;
   }
   .insight-box h3 { color: #1E40AF; margin-bottom: 8px; font-size: 17px; }
-  .strategy-cards {
+  .roth-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-top: 4px solid var(--green);
+  }
+  .roth-card h2 {
+    font-size: 20px;
+    color: var(--navy);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--green-light);
+  }
+  .roth-metrics {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-top: 16px;
   }
-  @media (max-width: 700px) { .strategy-cards { grid-template-columns: 1fr; } }
-  .strategy-card {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border-top: 4px solid var(--gold);
+  @media (max-width: 600px) { .roth-metrics { grid-template-columns: 1fr; } }
+  .roth-metric {
+    text-align: center;
+    padding: 12px;
+    background: #F0FFF4;
+    border-radius: 8px;
   }
-  .strategy-card h4 { color: var(--navy); margin-bottom: 8px; font-size: 16px; }
-  .strategy-card p { color: #475569; font-size: 14px; line-height: 1.5; }
+  .roth-metric .roth-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--green);
+  }
+  .roth-metric .roth-label {
+    font-size: 13px;
+    color: #475569;
+    margin-top: 4px;
+  }
   .cta-box {
     background: linear-gradient(135deg, var(--navy), var(--dark));
     color: var(--white);
@@ -246,6 +260,16 @@
   .cta-box h3 { font-size: 24px; margin-bottom: 12px; }
   .cta-box p { color: var(--gray); margin-bottom: 20px; font-size: 16px; }
   .cta-box .btn-primary { max-width: 400px; margin: 0 auto; }
+  .error-msg {
+    background: #FEE2E2;
+    border: 1px solid var(--red);
+    color: #991B1B;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
   footer {
     text-align: center;
     padding: 24px;
@@ -257,43 +281,52 @@
 <body>
 
 <div class="header">
-  <h1>Capital Gains <span>Bump Zone</span> Calculator</h1>
-  <p>See how selling stocks or real estate can trigger a hidden "double tax" — your capital gains push more Social Security into taxable income, costing you far more than you think.</p>
+  <h1>Widow <span>Tax Hit</span> Calculator</h1>
+  <p>When one spouse passes, the survivor faces a devastating tax increase — the standard deduction is cut in half, Social Security thresholds drop to single, and brackets compress. See the real cost.</p>
 </div>
 
 <div class="nav">
   <a href="/">Home</a>
   <a href="/ss-calculator">SS Claiming</a>
   <a href="/torpedo-calculator">Tax Torpedo</a>
-  <a href="/capital-gains" class="active">CG Bump Zone</a>
-  <a href="/widow-tax-hit">Widow Tax Hit</a>
-  <a href="/qcd-benefit">QCD Benefit</a>
+  <a href="/capital-gains">CG Bump Zone</a>
+  <a href="/widow-tax-hit" class="active">Widow Tax Hit</a>
 </div>
 
 <div class="container">
 
   <div class="alert-box red">
-    <strong>⚠ The Hidden Tax Trap:</strong> You think your capital gains are taxed at 0% or 15%? Think again. When capital gains push more of your Social Security into taxable income, the <em>effective</em> rate on those gains can be 2–3× higher than the nominal rate. This calculator reveals the real cost.
+    <strong>⚠ The Widow's Tax Penalty:</strong> When one spouse passes, the survivor doesn't just lose income — they face a devastating tax increase. The standard deduction is cut in half, SS thresholds drop to single, and brackets compress. This calculator reveals the true cost.
   </div>
+
+  <div id="errorMsg" class="error-msg"></div>
 
   <div class="card">
     <h2>Your Retirement Numbers</h2>
     <div class="form-grid">
       <div class="form-group">
-        <label>Annual Social Security (combined if married)</label>
-        <input type="number" id="ss_benefit" value="48000" step="1" min="0">
+        <label>Husband's Annual Social Security</label>
+        <input type="number" id="ss_benefit_husband" value="30000" step="1" min="0">
       </div>
       <div class="form-group">
-        <label>Other Retirement Income (pensions, IRA distributions, etc.)</label>
-        <input type="number" id="other_income" value="40000" step="1" min="0">
+        <label>Wife's Annual Social Security</label>
+        <input type="number" id="ss_benefit_wife" value="20000" step="1" min="0">
       </div>
       <div class="form-group">
-        <label>Capital Gain You're Considering</label>
-        <input type="number" id="capital_gain" value="50000" step="1" min="0">
+        <label>Other Income (pensions, etc.)</label>
+        <input type="number" id="other_income_joint" value="30000" step="1" min="0">
       </div>
       <div class="form-group">
-        <label>Tax-Exempt Interest (muni bonds)</label>
-        <input type="number" id="tax_exempt" value="0" step="1" min="0">
+        <label>IRA Balance</label>
+        <input type="number" id="ira_balance" value="300000" step="1000" min="0">
+      </div>
+      <div class="form-group">
+        <label>Husband's Birth Year</label>
+        <input type="number" id="birth_year_husband" value="1955" step="1" min="1920" max="2010">
+      </div>
+      <div class="form-group">
+        <label>Wife's Birth Year</label>
+        <input type="number" id="birth_year_wife" value="1957" step="1" min="1920" max="2010">
       </div>
       <div class="form-group">
         <label>Filing Status</label>
@@ -303,65 +336,51 @@
         </select>
       </div>
       <div class="form-group">
-        <label>&nbsp;</label>
-        <div style="padding-top:28px; color:#64748B; font-size:14px;">All figures are annual</div>
+        <label>Tax-Exempt Interest</label>
+        <input type="number" id="tax_exempt_interest" value="0" step="1" min="0">
       </div>
     </div>
-    <button class="btn-primary" onclick="calculate()">Reveal the Real Cost →</button>
+    <button class="btn-primary" onclick="calculate()">Reveal the Widow Tax Hit →</button>
   </div>
 
   <div id="results" class="results">
 
     <div class="bump-zone-highlight" id="bump-highlight">
-      <div class="label">YOUR EFFECTIVE CAPITAL GAINS RATE</div>
-      <div class="big-number" id="effective-rate">—</div>
-      <div class="sub" id="bump-explanation"></div>
+      <div class="label">YOUR INCOME DROPS TO</div>
+      <div class="big-number" id="income-pct">—</div>
+      <div class="label">% OF ORIGINAL</div>
+      <div class="sub" id="tax-increase-line"></div>
     </div>
 
     <div class="comparison-grid">
       <div class="comparison-card before">
-        <h3>✅ Before the Capital Gain</h3>
-        <div id="before-metrics"></div>
+        <h3>✅ While Both Alive</h3>
+        <div id="joint-metrics"></div>
       </div>
       <div class="comparison-card after">
-        <h3>❌ After the Capital Gain</h3>
-        <div id="after-metrics"></div>
+        <h3>❌ Survivor Alone</h3>
+        <div id="survivor-metrics"></div>
       </div>
     </div>
 
-    <div class="card">
-      <h2>The Bump Zone Chart</h2>
-      <p style="color:#64748B; margin-bottom:16px; font-size:15px;">See how the effective rate on capital gains spikes as the gain increases — the "bump zones" where your real tax rate jumps far above the nominal rate.</p>
-      <div class="chart-container">
-        <div id="bump-chart"></div>
-      </div>
+    <div class="insight-box" id="insight-box">
+      <h3>💡 Key Insight</h3>
+      <p id="insight-text">Loading…</p>
     </div>
 
-    <div class="insight-box">
-      <h3>💡 Why This Happens</h3>
-      <p>Capital gains are added to your <strong>Adjusted Gross Income (AGI)</strong>. AGI determines how much of your Social Security is taxable — not through a deduction, but through the <strong>provisional income</strong> formula. When a capital gain pushes your provisional income above $44,000 (MFJ) or $34,000 (single), up to 85¢ of every dollar of SS becomes taxable. The extra SS tax is the "bump zone" penalty — a hidden second layer of tax on your gains.</p>
-    </div>
-
-    <div class="strategy-cards">
-      <div class="strategy-card">
-        <h4>🔄 Spread the Gain</h4>
-        <p>Realize large gains over 2–3 years instead of all at once. This can keep you below the 85% SS threshold each year, saving thousands in bump-zone taxes.</p>
-      </div>
-      <div class="strategy-card">
-        <h4>🏠 Harvest Losses</h4>
-        <p>Sell losing investments to offset gains. Tax-loss harvesting reduces the net gain, potentially keeping you below the bump zone entirely.</p>
-      </div>
-      <div class="strategy-card">
-        <h4>📦 Roth Conversion First</h4>
-        <p>Do Roth conversions in low-income years before selling assets. Lower RMDs = lower AGI = more room for capital gains before hitting the bump zone.</p>
+    <div id="roth-section" style="display:none;">
+      <div class="roth-card">
+        <h2>🔄 With Roth Conversion</h2>
+        <p style="color:#475569; font-size:15px; margin-bottom:16px;">A strategic Roth conversion strategy can significantly reduce the widow's tax penalty by lowering future RMDs and keeping more Social Security tax-free.</p>
+        <div class="roth-metrics" id="roth-metrics"></div>
       </div>
     </div>
 
     <!-- Email My Report Section -->
     <div id="emailReportSection" class="email-report-section">
         <h3>📧 Get Your Detailed Report</h3>
-        <p>We'll email you a personalized 4-page analysis with your numbers, strategy recommendations, and next steps.</p>
-        <input type="hidden" id="emailReportCalc" value="capital-gains">
+        <p>We'll email you a personalized analysis with your numbers, strategy recommendations, and next steps.</p>
+        <input type="hidden" id="emailReportCalc" value="widow-tax-hit">
         <div class="email-input-row">
             <input type="email" id="emailReportInput" placeholder="your@email.com">
             <button id="emailSendBtn" class="email-send-btn" onclick="sendReportEmail()">SEND MY REPORT →</button>
@@ -370,16 +389,16 @@
     </div>
 
     <div class="cta-box">
-      <h3>Don't Let the Bump Zone Surprise You</h3>
-      <p>A capital gains sale you think will cost 0% or 15% could cost you 9%, 18%, or even 27%+ in combined federal taxes. Get a personalized strategy session to protect your retirement income.</p>
-      <button class="btn-primary" onclick="window.location.href='/torpedo-calculator'">See the Full Tax Torpedo →</button>
+      <h3>Don't Let the IRS Compound Your Loss</h3>
+      <p>Don't let the IRS compound your loss. Schedule a free consultation to explore Roth conversion strategies that protect your surviving spouse.</p>
+      <button class="btn-primary" onclick="window.location.href='/'">Schedule a Free Consultation →</button>
     </div>
 
   </div>
 </div>
 
 <footer>
-  &copy; 2026 Summit Tax Services — Capital Gains Bump Zone Calculator<br>
+  &copy; 2026 Summit Tax Services — Widow Tax Hit Calculator<br>
   <small>For educational purposes. Consult a tax professional for personal advice.</small>
 </footer>
 
@@ -455,29 +474,32 @@ async function sendReportEmail() {
 }
 
 function formatMoney(n) {
-  return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function formatPct(n) {
+  return Number(n).toFixed(1) + '%';
 }
 
 function calculate() {
+  const errorMsg = document.getElementById('errorMsg');
+  errorMsg.classList.remove('show');
+  errorMsg.textContent = '';
+
   const data = {
-    ss_benefit_monthly: parseFloat(document.getElementById('ss_benefit').value) / 12,
-    other_income: parseFloat(document.getElementById('other_income').value),
-    capital_gain: parseFloat(document.getElementById('capital_gain').value),
+    ss_benefit_husband: parseFloat(document.getElementById('ss_benefit_husband').value),
+    ss_benefit_wife: parseFloat(document.getElementById('ss_benefit_wife').value),
+    other_income_joint: parseFloat(document.getElementById('other_income_joint').value),
+    ira_balance: parseFloat(document.getElementById('ira_balance').value),
+    birth_year_husband: parseInt(document.getElementById('birth_year_husband').value),
+    birth_year_wife: parseInt(document.getElementById('birth_year_wife').value),
     filing: document.getElementById('filing').value,
-    tax_exempt_interest: parseFloat(document.getElementById('tax_exempt').value),
-  };
-  // We send annual SS directly
-  data.ss_benefit_annual = parseFloat(document.getElementById('ss_benefit').value);
-  delete data.ss_benefit_monthly;
-  lastCalcInputs = {
-    ss_benefit_annual: data.ss_benefit_annual,
-    other_income: data.other_income,
-    capital_gain: data.capital_gain,
-    filing: data.filing,
-    tax_exempt_interest: data.tax_exempt_interest,
+    tax_exempt_interest: parseFloat(document.getElementById('tax_exempt_interest').value),
   };
 
-  fetch('/api/capital-gains', {
+  lastCalcInputs = {...data};
+
+  fetch('/api/widow-tax-hit', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(data),
@@ -491,109 +513,84 @@ function calculate() {
     lastCalcResults = result;
     showEmailReport();
 
-    // Big number highlight
-    document.getElementById('effective-rate').textContent = result.effective_cg_rate + '%';
-    const nominal = result.nominal_cg_rate;
-    const bump = result.bump_zone_penalty;
-    let explanation = `Nominal rate: ${nominal}%. Bump zone penalty: +${bump}% hidden tax due to Social Security cascading.`;
-    if (bump > 10) {
-      explanation += ' This is a SEVERE bump zone — get professional help before selling.';
-    } else if (bump > 3) {
-      explanation += ' A moderate bump zone — consider spreading the gain.';
+    // --- Big highlight: income drop percentage ---
+    document.getElementById('income-pct').textContent = formatPct(result.income_pct_of_original);
+
+    const taxIncLine = document.getElementById('tax-increase-line');
+    if (result.tax_increase > 0) {
+      taxIncLine.innerHTML = 'Tax increase as survivor: <strong style="color:var(--red);">' + formatMoney(result.tax_increase) + '</strong> more per year';
+    } else {
+      taxIncLine.textContent = 'No tax increase projected.';
     }
-    document.getElementById('bump-explanation').textContent = explanation;
 
-    // Before metrics
-    const beforeHTML = `
-      <div class="metric"><span class="label">AGI</span><span class="value">${formatMoney(result.agi_before)}</span></div>
-      <div class="metric"><span class="label">Provisional Income</span><span class="value">${formatMoney(result.pi_before)}</span></div>
-      <div class="metric"><span class="label">SS Taxable</span><span class="value">${formatMoney(result.ss_taxable_before)} (${result.ss_pct_before}%)</span></div>
-      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.total_income_before)}</span></div>
-      <div class="metric"><span class="label">Federal Tax</span><span class="value">${formatMoney(result.fed_tax_before)}</span></div>
-      <div class="metric"><span class="label">Effective Rate</span><span class="value">${result.effective_rate_before}%</span></div>
+    // --- Joint (While Both Alive) metrics ---
+    const jointHTML = `
+      <div class="metric"><span class="label">SS Benefits</span><span class="value">${formatMoney(result.joint.ss_benefits)}</span></div>
+      <div class="metric"><span class="label">SS % Taxable</span><span class="value">${formatPct(result.joint.ss_pct_taxable)}</span></div>
+      <div class="metric"><span class="label">AGI</span><span class="value">${formatMoney(result.joint.agi)}</span></div>
+      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.joint.total_income)}</span></div>
+      <div class="metric"><span class="label">Federal Tax</span><span class="value green">${formatMoney(result.joint.federal_tax)}</span></div>
+      <div class="metric"><span class="label">Effective Rate</span><span class="value">${formatPct(result.joint.effective_rate)}</span></div>
+      <div class="metric"><span class="label">Net Cash Flow</span><span class="value green">${formatMoney(result.joint.net_cash_flow)}</span></div>
     `;
-    document.getElementById('before-metrics').innerHTML = beforeHTML;
+    document.getElementById('joint-metrics').innerHTML = jointHTML;
 
-    // After metrics
-    const afterHTML = `
-      <div class="metric"><span class="label">AGI</span><span class="value red">${formatMoney(result.agi_after)}</span></div>
-      <div class="metric"><span class="label">Provisional Income</span><span class="value red">${formatMoney(result.pi_after)}</span></div>
-      <div class="metric"><span class="label">SS Taxable</span><span class="value red">${formatMoney(result.ss_taxable_after)} (${result.ss_pct_after}%)</span></div>
-      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.total_income_after)}</span></div>
-      <div class="metric"><span class="label">Federal Tax</span><span class="value red">${formatMoney(result.fed_tax_after)}</span></div>
-      <div class="metric"><span class="label">Tax Increase</span><span class="value red">+${formatMoney(result.tax_increase)}</span></div>
-      <div class="metric"><span class="label">Extra SS Taxed</span><span class="value red">+${formatMoney(result.additional_ss_taxable)}</span></div>
+    // --- Survivor (Alone) metrics ---
+    const survHTML = `
+      <div class="metric"><span class="label">SS Benefits</span><span class="value red">${formatMoney(result.survivor.ss_benefits)}</span></div>
+      <div class="metric"><span class="label">SS % Taxable</span><span class="value red">${formatPct(result.survivor.ss_pct_taxable)}</span></div>
+      <div class="metric"><span class="label">AGI</span><span class="value">${formatMoney(result.survivor.agi)}</span></div>
+      <div class="metric"><span class="label">Total Income</span><span class="value">${formatMoney(result.survivor.total_income)}</span></div>
+      <div class="metric"><span class="label">Federal Tax</span><span class="value red">${formatMoney(result.survivor.federal_tax)}</span></div>
+      <div class="metric"><span class="label">Effective Rate</span><span class="value red">${formatPct(result.survivor.effective_rate)}</span></div>
+      <div class="metric"><span class="label">Net Cash Flow</span><span class="value red">${formatMoney(result.survivor.net_cash_flow)}</span></div>
     `;
-    document.getElementById('after-metrics').innerHTML = afterHTML;
+    document.getElementById('survivor-metrics').innerHTML = survHTML;
 
-    // Render chart
-    renderChart(data);
+    // --- Insight box ---
+    let insightText = '';
+    if (result.insight) {
+      insightText = result.insight;
+    } else {
+      const incomeDrop = (100 - result.income_pct_of_original).toFixed(1);
+      insightText = `As a survivor filing single, you lose <strong>${formatMoney(result.tax_increase)}</strong> more per year in federal taxes. ` +
+        `Your effective tax rate jumps from <strong>${formatPct(result.joint.effective_rate)}</strong> to <strong>${formatPct(result.survivor.effective_rate)}</strong>, ` +
+        `and your net cash flow drops by <strong>${incomeDrop}%</strong>. ` +
+        `This happens because the standard deduction is nearly halved, tax brackets compress, and more of your Social Security becomes taxable under single-filer thresholds.`;
+    }
+    document.getElementById('insight-text').innerHTML = insightText;
+
+    // --- Roth Conversion section (conditional) ---
+    const rothSection = document.getElementById('roth-section');
+    if (result.with_roth_conversion) {
+      rothSection.style.display = 'block';
+      const roth = result.with_roth_conversion;
+      const rothHTML = `
+        <div class="roth-metric">
+          <div class="roth-value">${formatPct(roth.effective_rate)}</div>
+          <div class="roth-label">Effective Rate with Roth</div>
+        </div>
+        <div class="roth-metric">
+          <div class="roth-value">${formatMoney(roth.tax_savings)}</div>
+          <div class="roth-label">Annual Tax Savings</div>
+        </div>
+        <div class="roth-metric">
+          <div class="roth-value">${formatMoney(roth.net_cash_flow)}</div>
+          <div class="roth-label">Net Cash Flow with Roth</div>
+        </div>
+      `;
+      document.getElementById('roth-metrics').innerHTML = rothHTML;
+    } else {
+      rothSection.style.display = 'none';
+    }
 
     // Scroll to results
     document.getElementById('results').scrollIntoView({behavior: 'smooth'});
-  });
-}
-
-function renderChart(inputData) {
-  // Generate chart data by requesting from API
-  fetch('/api/cg-bump-chart', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      ss_benefit_annual: inputData.ss_benefit_annual,
-      other_income: inputData.other_income,
-      filing: inputData.filing,
-      tax_exempt_interest: inputData.tax_exempt_interest,
-    }),
   })
-  .then(r => {
-    if (!r.ok) throw new Error('Chart error ' + r.status);
-    return r.json();
-  })
-  .then(data => {
-    const gains = data.chart_data.map(d => d.capital_gain);
-    const effectiveRates = data.chart_data.map(d => d.effective_rate);
-    const nominalRates = data.chart_data.map(d => d.nominal_rate);
-
-    const trace1 = {
-      x: gains,
-      y: effectiveRates,
-      name: 'Effective Rate (with SS cascading)',
-      type: 'scatter',
-      mode: 'lines',
-      line: {color: '#C0392B', width: 3},
-      fill: 'tozeroy',
-      fillcolor: 'rgba(192,57,43,0.1)',
-    };
-    const trace2 = {
-      x: gains,
-      y: nominalRates,
-      name: 'Nominal CG Rate',
-      type: 'scatter',
-      mode: 'lines',
-      line: {color: '#94A3B8', width: 2, dash: 'dash'},
-    };
-
-    const layout = {
-      title: 'The Capital Gains Bump Zone: Your Real Tax Rate',
-      xaxis: {title: 'Capital Gain Amount', tickprefix: '$', tickformat: ',.0f'},
-      yaxis: {title: 'Effective Tax Rate (%)', ticksuffix: '%'},
-      legend: {orientation: 'h', y: -0.15},
-      margin: {t: 40, b: 60, l: 60, r: 20},
-      paper_bgcolor: 'white',
-      plot_bgcolor: '#F8FAFC',
-      font: {size: 14, color: '#334155'},
-      annotations: [{
-        x: gains[Math.floor(gains.length/2)],
-        y: effectiveRates[Math.floor(effectiveRates.length/2)],
-        text: '← The BUMP ZONE: Your real rate',
-        showarrow: false,
-        font: {color: '#C0392B', size: 12},
-        yshift: 15,
-      }],
-    };
-
-    Plotly.newPlot('bump-chart', [trace1, trace2], layout, {responsive: true});
+  .catch(err => {
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.textContent = 'Error calculating results: ' + err.message;
+    errorMsg.classList.add('show');
   });
 }
 </script>

@@ -72,6 +72,28 @@ def capital_gains():
     return render_template('capital_gains.html', client_id=client_id)
 
 
+@app.route('/widow-tax-hit')
+def widow_tax_hit():
+    """Widow/survivor tax hit calculator."""
+    client_id = request.args.get('c')
+    if client_id:
+        client = client_db.get_client(client_id)
+        if client:
+            client_db.log_action(client_id, 'visit', 'Widow Tax Hit Calculator')
+    return render_template('widow_tax_hit.html', client_id=client_id)
+
+
+@app.route('/qcd-benefit')
+def qcd_benefit():
+    """QCD (Qualified Charitable Distribution) benefit calculator."""
+    client_id = request.args.get('c')
+    if client_id:
+        client = client_db.get_client(client_id)
+        if client:
+            client_db.log_action(client_id, 'visit', 'QCD Benefit Calculator')
+    return render_template('qcd_benefit.html', client_id=client_id)
+
+
 # ─── Client Registration & Tracking Routes ───────────────────────────
 
 @app.route('/register', methods=['POST'])
