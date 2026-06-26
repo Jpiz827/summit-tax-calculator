@@ -6,9 +6,12 @@ SQLite-backed client tracking with actions, reports, and dashboard data.
 import sqlite3
 import random
 import string
+import os
 from datetime import datetime, timezone
 
-DB_PATH = os.environ.get('DB_PATH', os.path.join(os.path.dirname(__file__), 'clients.db'))
+# Use /tmp for writable storage on Railway (ephemeral), local dir for dev
+DATA_DIR = os.environ.get('DATA_DIR', os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(DATA_DIR, 'clients.db')
 
 # Characters for client IDs: uppercase alphanumeric, no ambiguous chars (O/0/I/1/L)
 ID_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
