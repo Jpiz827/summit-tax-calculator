@@ -283,6 +283,102 @@
             font-size: 0.8rem;
             color: var(--gray-500);
         }
+
+        /* Planning Concepts Section */
+        .concepts-section {
+            margin-top: 40px;
+        }
+        .concepts-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .concepts-header h2 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.6rem;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .concepts-header p {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+        }
+        .concepts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        .concept-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px 24px 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--gold);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .concept-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .concept-card .icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        .concept-card h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .concept-card p {
+            font-size: 0.88rem;
+            color: var(--gray-700);
+            line-height: 1.65;
+            margin-bottom: 12px;
+        }
+        .concept-card .learn-more {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--gold);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .concept-card .learn-more:hover {
+            color: var(--gold-light);
+        }
+        .concepts-cta {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--dark) 100%);
+            border-radius: 12px;
+            padding: 28px 32px;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .concepts-cta h3 {
+            font-family: 'Merriweather', serif;
+            color: white;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        .concepts-cta p {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+        .concepts-cta a.cta-btn {
+            display: inline-block;
+            background: var(--gold);
+            color: white;
+            padding: 14px 36px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .concepts-cta a.cta-btn:hover {
+            background: var(--gold-light);
+        }
     </style>
 </head>
 <body>
@@ -410,6 +506,51 @@
                         <div id="emailStatus" class="email-status"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Bruce Larsen's Planning Concepts -->
+        <div class="concepts-section">
+            <div class="concepts-header">
+                <h2>Bruce Larsen's Planning Concepts</h2>
+                <p>Key strategies that protect your retirement from hidden tax claims and market losses.</p>
+            </div>
+            <div class="concepts-grid">
+                <div class="concept-card">
+                    <div class="icon">🏛️</div>
+                    <h3>The IRS Has a Claim on Your IRA</h3>
+                    <p>At a combined 35% tax rate, a $2.6M IRA carries a <strong>$982,000 embedded IRS claim</strong> — money that isn't yours. A Roth conversion systematically removes that claim, dollar by dollar, so every cent stays in your family.</p>
+                    <a href="/rothrx" class="learn-more">Learn more →</a>
+                </div>
+                <div class="concept-card">
+                    <div class="icon">📈</div>
+                    <h3>Indexed Growth Strategy (IGS)</h3>
+                    <p>Floor-protected, point-to-point indexed crediting with <strong>80% participation</strong> in S&P 500 gains — and a <strong>0% floor</strong> so you never lose money in down years (e.g., 2022's −19.4% becomes 0%). No annual fees. Credited as a single lump sum at term end.</p>
+                    <a href="/rothrx" class="learn-more">Learn more →</a>
+                </div>
+                <div class="concept-card">
+                    <div class="icon">🔄</div>
+                    <h3>Phase 1 → Phase 2 Conversion</h3>
+                    <p>Roth conversion isn't all-or-nothing. <strong>Phase 1</strong> starts the prescription — converting ~$50K/year over 7 years to eliminate a portion of the IRS claim. <strong>Phase 2</strong> completes it, removing the remaining claim entirely. Measured, tax-efficient, and deliberate.</p>
+                    <a href="/rothrx" class="learn-more">Learn more →</a>
+                </div>
+                <div class="concept-card">
+                    <div class="icon">🛡️</div>
+                    <h3>IRMAA & RMD Elimination</h3>
+                    <p>Converting to Roth reduces your future MAGI — which can drop you out of <strong>IRMAA surcharge brackets</strong> and save thousands per year on Medicare premiums. After full conversion, <strong>RMDs = $0</strong> — no more forced distributions pushing you into higher brackets.</p>
+                    <a href="/rothrx" class="learn-more">Learn more →</a>
+                </div>
+                <div class="concept-card">
+                    <div class="icon">💍</div>
+                    <h3>Widow Penalty Protection</h3>
+                    <p>When one spouse passes, the survivor drops to <strong>Single filing status</strong> — higher tax brackets, more Social Security taxed, and an IRMAA bracket jump. Roth assets are tax-free and don't inflate income, providing critical protection during a devastating life transition.</p>
+                    <a href="/rothrx" class="learn-more">Learn more →</a>
+                </div>
+            </div>
+            <div class="concepts-cta">
+                <h3>Ready to See Your Numbers?</h3>
+                <p>Launch the RothRx Blueprint Calculator to see exactly how a Roth conversion strategy impacts your lifetime wealth, taxes, and IRMAA surcharges.</p>
+                <a href="/rothrx" class="cta-btn">Launch the RothRx Blueprint Calculator →</a>
             </div>
         </div>
         
