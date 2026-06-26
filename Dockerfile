@@ -16,6 +16,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+RUN chmod +x start.sh
 
-# Use shell form so $PORT env variable is expanded at runtime
-CMD exec gunicorn wsgi:app --bind 0.0.0.0:${PORT:-5002}
+CMD ["./start.sh"]
