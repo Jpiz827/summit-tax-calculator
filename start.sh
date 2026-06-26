@@ -1,3 +1,3 @@
 #!/bin/bash
-# Railway start script - gunicorn on port 5002, Railway proxies to it
+# Railway start script - listen on fixed port 5002
 exec gunicorn wsgi:app --bind 0.0.0.0:5002
