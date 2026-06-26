@@ -292,6 +292,7 @@
   <a href="/capital-gains">CG Bump Zone</a>
   <a href="/widow-tax-hit" class="active">Widow Tax Hit</a>
   <a href="/qcd-benefit">QCD Benefit</a>
+  <a href="/irmaa">IRMAA</a>
 </div>
 
 <div class="container">
@@ -307,19 +308,19 @@
     <div class="form-grid">
       <div class="form-group">
         <label>Husband's Annual Social Security</label>
-        <input type="number" id="ss_benefit_husband" value="30000" step="1" min="0">
+        <input type="text" class="money-input" id="ss_benefit_husband" value="30,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Wife's Annual Social Security</label>
-        <input type="number" id="ss_benefit_wife" value="20000" step="1" min="0">
+        <input type="text" class="money-input" id="ss_benefit_wife" value="20,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Other Income (pensions, etc.)</label>
-        <input type="number" id="other_income_joint" value="30000" step="1" min="0">
+        <input type="text" class="money-input" id="other_income_joint" value="30,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>IRA Balance</label>
-        <input type="number" id="ira_balance" value="300000" step="1000" min="0">
+        <input type="text" class="money-input" id="ira_balance" value="300,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Husband's Birth Year</label>
@@ -338,7 +339,7 @@
       </div>
       <div class="form-group">
         <label>Tax-Exempt Interest</label>
-        <input type="number" id="tax_exempt_interest" value="0" step="1" min="0">
+        <input type="text" class="money-input" id="tax_exempt_interest" value="0" inputmode="numeric">
       </div>
     </div>
     <button class="btn-primary" onclick="calculate()">Reveal the Widow Tax Hit →</button>
@@ -404,6 +405,33 @@
 </footer>
 
 <script>
+// Auto-format money inputs with commas as you type
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.money-input').forEach(function(input) {
+    input.addEventListener('input', function(e) {
+      var cursorPos = this.selectionStart;
+      var oldVal = this.value;
+      var raw = oldVal.replace(/[^0-9]/g, '');
+      var formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      this.value = formatted;
+      var diff = formatted.length - oldVal.length;
+      var newPos = cursorPos + diff;
+      if (newPos < 0) newPos = 0;
+      if (newPos > formatted.length) newPos = formatted.length;
+      this.setSelectionRange(newPos, newPos);
+    });
+    input.addEventListener('blur', function() {
+      var raw = this.value.replace(/[^0-9]/g, '');
+      if (raw === '') raw = '0';
+      this.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    });
+  });
+});
+
+function parseMoney(val) {
+  return parseFloat(val.replace(/,/g, '')) || 0;
+}
+
 // --- Email My Report ---
 let lastCalcInputs = {};
 let lastCalcResults = {};
@@ -488,14 +516,14 @@ function calculate() {
   errorMsg.textContent = '';
 
   const data = {
-    ss_benefit_husband: parseFloat(document.getElementById('ss_benefit_husband').value),
-    ss_benefit_wife: parseFloat(document.getElementById('ss_benefit_wife').value),
-    other_income_joint: parseFloat(document.getElementById('other_income_joint').value),
-    ira_balance: parseFloat(document.getElementById('ira_balance').value),
+    ss_benefit_husband: parseMoney(document.getElementById('ss_benefit_husband').value),
+    ss_benefit_wife: parseMoney(document.getElementById('ss_benefit_wife').value),
+    other_income_joint: parseMoney(document.getElementById('other_income_joint').value),
+    ira_balance: parseMoney(document.getElementById('ira_balance').value),
     birth_year_husband: parseInt(document.getElementById('birth_year_husband').value),
     birth_year_wife: parseInt(document.getElementById('birth_year_wife').value),
     filing: document.getElementById('filing').value,
-    tax_exempt_interest: parseFloat(document.getElementById('tax_exempt_interest').value),
+    tax_exempt_interest: parseMoney(document.getElementById('tax_exempt_interest').value),
   };
 
   lastCalcInputs = {...data};

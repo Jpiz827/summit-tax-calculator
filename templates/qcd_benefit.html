@@ -292,6 +292,7 @@
   <a href="/capital-gains">CG Bump Zone</a>
   <a href="/widow-tax-hit">Widow Tax Hit</a>
   <a href="/qcd-benefit" class="active">QCD Benefit</a>
+  <a href="/irmaa">IRMAA</a>
  </div>
 
 <div class="container">
@@ -305,19 +306,19 @@
     <div class="form-grid">
       <div class="form-group">
         <label>Annual Social Security (combined if married)</label>
-        <input type="number" id="ss_benefit_annual" value="48000" step="1" min="0">
+        <input type="text" class="money-input" id="ss_benefit_annual" value="48,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Other Income (pensions, etc.)</label>
-        <input type="number" id="other_income" value="40000" step="1" min="0">
+        <input type="text" class="money-input" id="other_income" value="40,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Your RMD Amount</label>
-        <input type="number" id="rmd_amount" value="20000" step="1" min="0">
+        <input type="text" class="money-input" id="rmd_amount" value="20,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>QCD Amount (to charity)</label>
-        <input type="number" id="qcd_amount" value="10000" step="1" min="0">
+        <input type="text" class="money-input" id="qcd_amount" value="10,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Filing Status</label>
@@ -328,7 +329,7 @@
       </div>
       <div class="form-group">
         <label>Tax-Exempt Interest</label>
-        <input type="number" id="tax_exempt_interest" value="0" step="1" min="0">
+        <input type="text" class="money-input" id="tax_exempt_interest" value="0" inputmode="numeric">
       </div>
     </div>
     <button class="btn-primary" onclick="calculate()">Calculate QCD Benefit →</button>
@@ -397,6 +398,33 @@
 </footer>
 
 <script>
+// Auto-format money inputs with commas as you type
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.money-input').forEach(function(input) {
+    input.addEventListener('input', function(e) {
+      var cursorPos = this.selectionStart;
+      var oldVal = this.value;
+      var raw = oldVal.replace(/[^0-9]/g, '');
+      var formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      this.value = formatted;
+      var diff = formatted.length - oldVal.length;
+      var newPos = cursorPos + diff;
+      if (newPos < 0) newPos = 0;
+      if (newPos > formatted.length) newPos = formatted.length;
+      this.setSelectionRange(newPos, newPos);
+    });
+    input.addEventListener('blur', function() {
+      var raw = this.value.replace(/[^0-9]/g, '');
+      if (raw === '') raw = '0';
+      this.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    });
+  });
+});
+
+function parseMoney(val) {
+  return parseFloat(val.replace(/,/g, '')) || 0;
+}
+
 // --- Email My Report ---
 let lastCalcInputs = {};
 let lastCalcResults = {};
@@ -477,12 +505,12 @@ function formatPct(n) {
 
 function calculate() {
   const data = {
-    ss_benefit_annual: parseFloat(document.getElementById('ss_benefit_annual').value),
-    other_income: parseFloat(document.getElementById('other_income').value),
-    rmd_amount: parseFloat(document.getElementById('rmd_amount').value),
-    qcd_amount: parseFloat(document.getElementById('qcd_amount').value),
+    ss_benefit_annual: parseMoney(document.getElementById('ss_benefit_annual').value),
+    other_income: parseMoney(document.getElementById('other_income').value),
+    rmd_amount: parseMoney(document.getElementById('rmd_amount').value),
+    qcd_amount: parseMoney(document.getElementById('qcd_amount').value),
     filing: document.getElementById('filing').value,
-    tax_exempt_interest: parseFloat(document.getElementById('tax_exempt_interest').value),
+    tax_exempt_interest: parseMoney(document.getElementById('tax_exempt_interest').value),
   };
   lastCalcInputs = {...data};
 

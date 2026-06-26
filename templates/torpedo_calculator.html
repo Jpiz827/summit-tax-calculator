@@ -347,6 +347,7 @@
       <a href="/capital-gains">CG Bump Zone</a>
       <a href="/widow-tax-hit">Widow Tax Hit</a>
       <a href="/qcd-benefit">QCD Benefit</a>
+  <a href="/irmaa">IRMAA</a>
     </div>
     
     <div class="header">
@@ -371,7 +372,7 @@
                     
                     <div class="form-group">
                         <label for="ss_benefit">Monthly Social Security Benefit</label>
-                        <input type="number" id="ss_benefit" value="2500" min="0" step="1">
+                        <input type="text" class="money-input" id="ss_benefit" value="2,500" inputmode="numeric">
                         <div class="help">Your benefit at claiming age (or PIA)</div>
                     </div>
                     <div class="form-group">
@@ -397,12 +398,12 @@
                     
                     <div class="form-group">
                         <label for="other_income">Pension + Wages + Interest + Dividends</label>
-                        <input type="number" id="other_income" value="40000" min="0" step="1">
+                        <input type="text" class="money-input" id="other_income" value="40,000" inputmode="numeric">
                         <div class="help">All non-SS, non-RMD income</div>
                     </div>
                     <div class="form-group">
                         <label for="ira_balance">Traditional IRA / 401(k) Balance</label>
-                        <input type="number" id="ira_balance" value="300000" min="0" step="1">
+                        <input type="text" class="money-input" id="ira_balance" value="300,000" inputmode="numeric">
                         <div class="help">Used to calculate your RMD amount</div>
                     </div>
                     <div class="form-group">
@@ -417,7 +418,7 @@
                     
                     <div class="form-group">
                         <label for="roth_conversion">Proposed Roth Conversion Amount</label>
-                        <input type="number" id="roth_conversion" value="0" min="0" step="1">
+                        <input type="text" class="money-input" id="roth_conversion" value="0" inputmode="numeric">
                         <div class="help">Enter 0 to see current situation only, or an amount to compare</div>
                     </div>
                     
@@ -462,12 +463,12 @@
                     
                     <div class="form-group">
                         <label for="widow_ss_husband">His Annual Social Security</label>
-                        <input type="number" id="widow_ss_husband" value="30000" min="0" step="1">
+                        <input type="text" class="money-input" id="widow_ss_husband" value="30,000" inputmode="numeric">
                         <div class="help">Husband's annual SS benefit</div>
                     </div>
                     <div class="form-group">
                         <label for="widow_ss_wife">Her Annual Social Security</label>
-                        <input type="number" id="widow_ss_wife" value="20000" min="0" step="1">
+                        <input type="text" class="money-input" id="widow_ss_wife" value="20,000" inputmode="numeric">
                         <div class="help">Wife's annual SS benefit</div>
                     </div>
 
@@ -475,12 +476,12 @@
                     
                     <div class="form-group">
                         <label for="widow_other_income">Other Retirement Income</label>
-                        <input type="number" id="widow_other_income" value="30000" min="0" step="1">
+                        <input type="text" class="money-input" id="widow_other_income" value="30,000" inputmode="numeric">
                         <div class="help">Pensions, wages, interest, dividends (annual)</div>
                     </div>
                     <div class="form-group">
                         <label for="widow_ira_balance">IRA Balance</label>
-                        <input type="number" id="widow_ira_balance" value="300000" min="0" step="1">
+                        <input type="text" class="money-input" id="widow_ira_balance" value="300,000" inputmode="numeric">
                         <div class="help">Traditional IRA / 401(k) balance</div>
                     </div>
                     <div class="form-group">
@@ -559,6 +560,33 @@
     </div>
 
     <script>
+        // Auto-format money inputs with commas as you type
+        document.addEventListener('DOMContentLoaded', function() {
+          document.querySelectorAll('.money-input').forEach(function(input) {
+            input.addEventListener('input', function(e) {
+              var cursorPos = this.selectionStart;
+              var oldVal = this.value;
+              var raw = oldVal.replace(/[^0-9]/g, '');
+              var formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+              this.value = formatted;
+              var diff = formatted.length - oldVal.length;
+              var newPos = cursorPos + diff;
+              if (newPos < 0) newPos = 0;
+              if (newPos > formatted.length) newPos = formatted.length;
+              this.setSelectionRange(newPos, newPos);
+            });
+            input.addEventListener('blur', function() {
+              var raw = this.value.replace(/[^0-9]/g, '');
+              if (raw === '') raw = '0';
+              this.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            });
+          });
+        });
+
+        function parseMoney(val) {
+          return parseFloat(val.replace(/,/g, '')) || 0;
+        }
+
         // --- Email My Report ---
         let lastCalcInputs = {};
         let lastCalcResults = {};
@@ -656,20 +684,20 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        ss_benefit_monthly: parseFloat(document.getElementById('ss_benefit').value),
-                        other_income: parseFloat(document.getElementById('other_income').value),
-                        ira_balance: parseFloat(document.getElementById('ira_balance').value),
-                        roth_conversion: parseFloat(document.getElementById('roth_conversion').value),
+                        ss_benefit_monthly: parseMoney(document.getElementById('ss_benefit').value),
+                        other_income: parseMoney(document.getElementById('other_income').value),
+                        ira_balance: parseMoney(document.getElementById('ira_balance').value),
+                        roth_conversion: parseMoney(document.getElementById('roth_conversion').value),
                         birth_year: parseInt(document.getElementById('birth_year').value),
                         claim_age: parseInt(document.getElementById('claim_age').value),
                         filing: document.getElementById('filing').value,
                     })
                 });
                 lastCalcInputs = {
-                    ss_benefit_monthly: parseFloat(document.getElementById('ss_benefit').value),
-                    other_income: parseFloat(document.getElementById('other_income').value),
-                    ira_balance: parseFloat(document.getElementById('ira_balance').value),
-                    roth_conversion: parseFloat(document.getElementById('roth_conversion').value),
+                    ss_benefit_monthly: parseMoney(document.getElementById('ss_benefit').value),
+                    other_income: parseMoney(document.getElementById('other_income').value),
+                    ira_balance: parseMoney(document.getElementById('ira_balance').value),
+                    roth_conversion: parseMoney(document.getElementById('roth_conversion').value),
                     birth_year: parseInt(document.getElementById('birth_year').value),
                     claim_age: parseInt(document.getElementById('claim_age').value),
                     filing: document.getElementById('filing').value,
@@ -961,10 +989,10 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        ss_benefit_husband: parseFloat(document.getElementById('widow_ss_husband').value),
-                        ss_benefit_wife: parseFloat(document.getElementById('widow_ss_wife').value),
-                        other_income_joint: parseFloat(document.getElementById('widow_other_income').value),
-                        ira_balance: parseFloat(document.getElementById('widow_ira_balance').value),
+                        ss_benefit_husband: parseMoney(document.getElementById('widow_ss_husband').value),
+                        ss_benefit_wife: parseMoney(document.getElementById('widow_ss_wife').value),
+                        other_income_joint: parseMoney(document.getElementById('widow_other_income').value),
+                        ira_balance: parseMoney(document.getElementById('widow_ira_balance').value),
                         filing: document.getElementById('widow_filing').value,
                         tax_exempt_interest: 0
                     })

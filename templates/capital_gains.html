@@ -268,6 +268,7 @@
   <a href="/capital-gains" class="active">CG Bump Zone</a>
   <a href="/widow-tax-hit">Widow Tax Hit</a>
   <a href="/qcd-benefit">QCD Benefit</a>
+  <a href="/irmaa">IRMAA</a>
 </div>
 
 <div class="container">
@@ -281,19 +282,19 @@
     <div class="form-grid">
       <div class="form-group">
         <label>Annual Social Security (combined if married)</label>
-        <input type="number" id="ss_benefit" value="48000" step="1" min="0">
+        <input type="text" class="money-input" id="ss_benefit" value="48,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Other Retirement Income (pensions, IRA distributions, etc.)</label>
-        <input type="number" id="other_income" value="40000" step="1" min="0">
+        <input type="text" class="money-input" id="other_income" value="40,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Capital Gain You're Considering</label>
-        <input type="number" id="capital_gain" value="50000" step="1" min="0">
+        <input type="text" class="money-input" id="capital_gain" value="50,000" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Tax-Exempt Interest (muni bonds)</label>
-        <input type="number" id="tax_exempt" value="0" step="1" min="0">
+        <input type="text" class="money-input" id="tax_exempt" value="0" inputmode="numeric">
       </div>
       <div class="form-group">
         <label>Filing Status</label>
@@ -384,6 +385,33 @@
 </footer>
 
 <script>
+// Auto-format money inputs with commas as you type
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.money-input').forEach(function(input) {
+    input.addEventListener('input', function(e) {
+      var cursorPos = this.selectionStart;
+      var oldVal = this.value;
+      var raw = oldVal.replace(/[^0-9]/g, '');
+      var formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      this.value = formatted;
+      var diff = formatted.length - oldVal.length;
+      var newPos = cursorPos + diff;
+      if (newPos < 0) newPos = 0;
+      if (newPos > formatted.length) newPos = formatted.length;
+      this.setSelectionRange(newPos, newPos);
+    });
+    input.addEventListener('blur', function() {
+      var raw = this.value.replace(/[^0-9]/g, '');
+      if (raw === '') raw = '0';
+      this.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    });
+  });
+});
+
+function parseMoney(val) {
+  return parseFloat(val.replace(/,/g, '')) || 0;
+}
+
 // --- Email My Report ---
 let lastCalcInputs = {};
 let lastCalcResults = {};
@@ -460,14 +488,14 @@ function formatMoney(n) {
 
 function calculate() {
   const data = {
-    ss_benefit_monthly: parseFloat(document.getElementById('ss_benefit').value) / 12,
-    other_income: parseFloat(document.getElementById('other_income').value),
-    capital_gain: parseFloat(document.getElementById('capital_gain').value),
+    ss_benefit_monthly: parseMoney(document.getElementById('ss_benefit').value) / 12,
+    other_income: parseMoney(document.getElementById('other_income').value),
+    capital_gain: parseMoney(document.getElementById('capital_gain').value),
     filing: document.getElementById('filing').value,
-    tax_exempt_interest: parseFloat(document.getElementById('tax_exempt').value),
+    tax_exempt_interest: parseMoney(document.getElementById('tax_exempt').value),
   };
   // We send annual SS directly
-  data.ss_benefit_annual = parseFloat(document.getElementById('ss_benefit').value);
+  data.ss_benefit_annual = parseMoney(document.getElementById('ss_benefit').value);
   delete data.ss_benefit_monthly;
   lastCalcInputs = {
     ss_benefit_annual: data.ss_benefit_annual,

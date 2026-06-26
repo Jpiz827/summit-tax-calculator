@@ -9,6 +9,7 @@ from tax_engine import (
     get_fra, get_fra_display, calc_ss_benefit_at_age,
     calc_provisional_income, calc_ss_taxable, calc_effective_marginal_rate,
     calc_irmaa, calc_irmaa_tier,
+    calc_marginal_rate, IRMAA_MFJ, IRMAA_SINGLE,
     calc_capital_gains_bump, calc_cg_bump_chart_data,
     calc_widow_tax_hit,
     calc_qcd_benefit,
@@ -92,6 +93,17 @@ def qcd_benefit():
         if client:
             client_db.log_action(client_id, 'visit', 'QCD Benefit Calculator')
     return render_template('qcd_benefit.html', client_id=client_id)
+
+
+@app.route('/irmaa')
+def irmaa():
+    """IRMAA surcharge calculator."""
+    client_id = request.args.get('c')
+    if client_id:
+        client = client_db.get_client(client_id)
+        if client:
+            client_db.log_action(client_id, 'visit', 'IRMAA Calculator')
+    return render_template('irmaa.html', client_id=client_id)
 
 
 # ─── Client Registration & Tracking Routes ───────────────────────────
@@ -470,6 +482,106 @@ def api_qcd_benefit():
         filing=data.get('filing', 'MFJ'),
         tax_exempt_interest=float(data.get('tax_exempt_interest', 0)),
     )
+    
+    return jsonify(result)
+
+
+@app.route('/api/irmaa', methods=['POST'])
+def api_irmaa():
+    """Calculate IRMAA surcharge and show bracket position."""
+    data = request.json
+    
+    # Income inputs
+    ss_benefit = float(data.get('ss_benefit_annual', 48000))
+    other_income = float(data.get('other_income', 40000))
+    rmd_amount = float(data.get('rmd_amount', 20000))
+    tax_exempt_interest = float(data.get('tax_exempt_interest', 0))
+    filing = data.get('filing', 'MFJ')
+    
+    # Optional Roth conversion
+    roth_conversion = float(data.get('roth_conversion', 0))
+    
+    # Current MAGI (all income + taxable SS + tax-exempt interest)
+    ss_taxable, ss_pct = calc_ss_taxable(
+        ss_benefit,
+        calc_provisional_income(other_income + rmd_amount, ss_benefit, tax_exempt_interest, filing),
+        filing
+    )
+    current_magi = other_income + rmd_amount + ss_taxable + tax_exempt_interest
+    
+    # With Roth conversion: RMD reduced by conversion amount for future years,
+    # but this year conversion ADDS to MAGI
+    # Show: current MAGI vs what happens if you convert X (one-time spike)
+    # vs ongoing lower MAGI after conversion reduces future RMDs
+    magi_with_roth = current_magi + roth_conversion  # conversion adds to MAGI this year
+    
+    # Future year: lower RMDs from smaller IRA balance
+    ira_balance = float(data.get('ira_balance', 300000))
+    future_ira = ira_balance - roth_conversion
+    future_rmd = future_ira / 26.5 if future_ira > 0 else 0  # age 73 divisor
+    future_ss_taxable, future_ss_pct = calc_ss_taxable(
+        ss_benefit,
+        calc_provisional_income(other_income + future_rmd, ss_benefit, tax_exempt_interest, filing),
+        filing
+    )
+    future_magi = other_income + future_rmd + future_ss_taxable + tax_exempt_interest
+    
+    # IRMAA calculations
+    current_irmaa = calc_irmaa(current_magi, filing)
+    current_tier, current_surcharge = calc_irmaa_tier(current_magi, filing)
+    future_irmaa = calc_irmaa(future_magi, filing)
+    future_tier, future_surcharge = calc_irmaa_tier(future_magi, filing)
+    spike_irmaa = calc_irmaa(magi_with_roth, filing)
+    spike_tier, spike_surcharge = calc_irmaa_tier(magi_with_roth, filing)
+    
+    # Federal tax on current scenario
+    _, fed_tax_current = calc_marginal_rate(current_magi, filing)
+    _, fed_tax_future = calc_marginal_rate(future_magi, filing)
+    _, fed_tax_spike = calc_marginal_rate(magi_with_roth, filing)
+    
+    # IRMAA bracket boundaries for visualization
+    brackets = IRMAA_MFJ if filing == 'MFJ' else IRMAA_SINGLE
+    
+    result = {
+        'filing': filing,
+        
+        # Current situation
+        'current_magi': round(current_magi, 2),
+        'current_ss_taxable': round(ss_taxable, 2),
+        'current_ss_pct': round(ss_pct, 1),
+        'current_irmaa_annual': round(current_irmaa, 2),
+        'current_irmaa_monthly': round(current_surcharge, 2),
+        'current_tier': current_tier,
+        'current_fed_tax': round(fed_tax_current, 2),
+        'current_total_cost': round(fed_tax_current + current_irmaa, 2),
+        
+        # With Roth conversion (this year - spike)
+        'spike_magi': round(magi_with_roth, 2),
+        'spike_irmaa_annual': round(spike_irmaa, 2),
+        'spike_irmaa_monthly': round(spike_surcharge, 2),
+        'spike_tier': spike_tier,
+        'spike_fed_tax': round(fed_tax_spike, 2),
+        'spike_total_cost': round(fed_tax_spike + spike_irmaa, 2),
+        
+        # After Roth conversion (future years - ongoing)
+        'future_magi': round(future_magi, 2),
+        'future_ss_taxable': round(future_ss_taxable, 2),
+        'future_ss_pct': round(future_ss_pct, 1),
+        'future_irmaa_annual': round(future_irmaa, 2),
+        'future_irmaa_monthly': round(future_surcharge, 2),
+        'future_tier': future_tier,
+        'future_fed_tax': round(fed_tax_future, 2),
+        'future_total_cost': round(fed_tax_future + future_irmaa, 2),
+        
+        # Savings
+        'annual_irmaa_savings': round(current_irmaa - future_irmaa, 2),
+        'annual_tax_savings': round(fed_tax_current - fed_tax_future, 2),
+        'total_annual_savings': round((current_irmaa - future_irmaa) + (fed_tax_current - fed_tax_future), 2),
+        'five_year_savings': round(((current_irmaa - future_irmaa) + (fed_tax_current - fed_tax_future)) * 5, 2),
+        
+        # Bracket table for visualization
+        'brackets': [{'threshold': b[0], 'surcharge': b[1]} for b in brackets],
+    }
     
     return jsonify(result)
 

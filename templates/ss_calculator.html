@@ -293,6 +293,7 @@
       <a href="/capital-gains">CG Bump Zone</a>
       <a href="/widow-tax-hit">Widow Tax Hit</a>
       <a href="/qcd-benefit">QCD Benefit</a>
+  <a href="/irmaa">IRMAA</a>
     </div>
     
     <div class="header">
@@ -307,7 +308,7 @@
                 <form id="ssForm">
                     <div class="form-group">
                         <label for="pia_monthly">Your Monthly Benefit at Full Retirement Age</label>
-                        <input type="number" id="pia_monthly" value="2500" min="0" step="1" placeholder="e.g., 2500">
+                        <input type="text" class="money-input" id="pia_monthly" value="2,500" inputmode="numeric" placeholder="e.g., 2,500">
                         <div class="help">This is your PIA — the amount on your Social Security statement</div>
                     </div>
                     <div class="form-group">
@@ -328,7 +329,7 @@
                     </div>
                     <div class="form-group" id="spouseGroup" style="display:none;">
                         <label for="spouse_pia">Spouse's Monthly Benefit at FRA</label>
-                        <input type="number" id="spouse_pia" value="1500" min="0" step="1">
+                        <input type="text" class="money-input" id="spouse_pia" value="1,500" inputmode="numeric">
                     </div>
                     <div class="form-group" id="spouseBirthGroup" style="display:none;">
                         <label for="spouse_birth_year">Spouse's Birth Year</label>
@@ -419,6 +420,33 @@
     </div>
 
     <script>
+        // Auto-format money inputs with commas as you type
+        document.addEventListener('DOMContentLoaded', function() {
+          document.querySelectorAll('.money-input').forEach(function(input) {
+            input.addEventListener('input', function(e) {
+              var cursorPos = this.selectionStart;
+              var oldVal = this.value;
+              var raw = oldVal.replace(/[^0-9]/g, '');
+              var formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+              this.value = formatted;
+              var diff = formatted.length - oldVal.length;
+              var newPos = cursorPos + diff;
+              if (newPos < 0) newPos = 0;
+              if (newPos > formatted.length) newPos = formatted.length;
+              this.setSelectionRange(newPos, newPos);
+            });
+            input.addEventListener('blur', function() {
+              var raw = this.value.replace(/[^0-9]/g, '');
+              if (raw === '') raw = '0';
+              this.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            });
+          });
+        });
+
+        function parseMoney(val) {
+          return parseFloat(val.replace(/,/g, '')) || 0;
+        }
+
         // --- Email My Report ---
         let lastCalcInputs = {};
         let lastCalcResults = {};
@@ -514,22 +542,22 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        pia_monthly: parseFloat(document.getElementById('pia_monthly').value),
+                        pia_monthly: parseMoney(document.getElementById('pia_monthly').value),
                         birth_year: parseInt(document.getElementById('birth_year').value),
                         filing: document.getElementById('filing').value,
                         life_expectancy: parseInt(document.getElementById('life_expectancy').value),
-                        spouse_pia_monthly: parseFloat(document.getElementById('spouse_pia').value || 0),
+                        spouse_pia_monthly: parseMoney(document.getElementById('spouse_pia').value || '0'),
                         spouse_birth_year: parseInt(document.getElementById('spouse_birth_year').value || 1960),
                     })
                 });
                 
                 // Store inputs for email report
                 lastCalcInputs = {
-                    pia_monthly: parseFloat(document.getElementById('pia_monthly').value),
+                    pia_monthly: parseMoney(document.getElementById('pia_monthly').value),
                     birth_year: parseInt(document.getElementById('birth_year').value),
                     filing: document.getElementById('filing').value,
                     life_expectancy: parseInt(document.getElementById('life_expectancy').value),
-                    spouse_pia_monthly: parseFloat(document.getElementById('spouse_pia').value || 0),
+                    spouse_pia_monthly: parseMoney(document.getElementById('spouse_pia').value || '0'),
                     spouse_birth_year: parseInt(document.getElementById('spouse_birth_year').value || 1960),
                 };
                 
