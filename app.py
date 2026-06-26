@@ -106,10 +106,175 @@ def irmaa():
     return render_template('irmaa.html', client_id=client_id)
 
 
+@app.route('/tax-bill')
+def tax_bill():
+    """Retirement Tax Bill Calculator — 3-step lead generation funnel."""
+    client_id = request.args.get('c')
+    if client_id:
+        client = client_db.get_client(client_id)
+        if client:
+            client_db.log_action(client_id, 'visit', 'Tax Bill Calculator')
+    return render_template('tax_bill.html', client_id=client_id)
+
+
 @app.route('/rothrx')
 def rothrx():
     """RothRx Blueprint Calculator (self-contained)."""
     return render_template('rothrx.html')
+
+
+
+@app.route('/api/tax-bill-calculate', methods=['POST'])
+def api_tax_bill_calculate():
+    """Calculate retirement tax bill comparison (current vs adjusted approach).
+    Accepts: {ira_balance, tax_rate, age, filing, growth_rate?}
+    Returns: {total_taxes_current, total_taxes_conversion, tax_savings,
+              ira_after_distributions, taxable_acct_value, roth_value, rmd_schedule}
+    """
+    data = request.json
+    ira_balance = float(data.get('ira_balance', 0))
+    tax_rate = float(data.get('tax_rate', 0.25))
+    age = int(data.get('age', 65))
+    filing = data.get('filing', 'MFJ')
+    growth_rate = float(data.get('growth_rate', 0.05))
+
+    if ira_balance <= 0:
+        return jsonify({'error': 'IRA balance must be greater than 0'}), 400
+    if not (0.15 <= tax_rate <= 0.40):
+        return jsonify({'error': 'Tax rate must be between 15% and 40%'}), 400
+    if not (55 <= age <= 80):
+        return jsonify({'error': 'Age must be between 55 and 80'}), 400
+
+    # Calculate RMD schedule (current approach)
+    from report_generator import _calc_rmd_schedule
+    rmd_schedule = _calc_rmd_schedule(ira_balance, growth_rate, tax_rate, age, min(age + 30, 95))
+
+    # Total taxes under current approach = sum of (RMD * tax_rate) for all RMD years
+    total_taxes_current = sum(row['rmd'] * tax_rate for row in rmd_schedule)
+
+    # IRA remaining after all distributions
+    ira_after_distributions = rmd_schedule[-1]['remaining_ira'] if rmd_schedule else 0
+
+    # Taxable account value (after-tax RMDs reinvested)
+    taxable_acct_value = rmd_schedule[-1]['taxable_acct'] if rmd_schedule else 0
+
+    # Adjusted approach: Convert entire IRA to Roth
+    # Tax on conversion = IRA balance * tax_rate
+    total_taxes_conversion = ira_balance * tax_rate
+
+    # Roth value after growth (tax-free)
+    years = min(age + 30, 95) - age
+    roth_value = ira_balance * (1 + growth_rate) ** years * (1 - tax_rate)  # after paying conversion tax
+
+    # Actually, the Roth value should just be the IRA balance growing tax-free
+    # The conversion tax is paid from outside (or from the IRA itself)
+    # For simplicity: Roth = (IRA - taxes) * growth^years if taxes paid from IRA
+    # Or Roth = IRA * growth^years if taxes paid from outside
+    # Stonewood shows: taxes paid separately, Roth = full IRA balance growing tax-free
+    roth_value = ira_balance * (1 + growth_rate) ** years  # full balance, tax-free growth
+
+    # Tax savings = current approach total taxes - conversion taxes
+    tax_savings = total_taxes_current - total_taxes_conversion
+
+    # Format RMD schedule for response
+    rmd_data = []
+    for row in rmd_schedule:
+        if row['rmd'] > 0 or row['age'] <= age + 2:
+            rmd_data.append({
+                'age': row['age'],
+                'rmd_factor': row['rmd_factor'],
+                'rmd': round(row['rmd'], 2),
+                'after_tax_rmd': round(row['after_tax_rmd'], 2),
+                'remaining_ira': round(row['remaining_ira'], 2),
+                'taxable_acct': round(row['taxable_acct'], 2),
+            })
+
+    return jsonify({
+        'total_taxes_current': round(total_taxes_current, 2),
+        'total_taxes_conversion': round(total_taxes_conversion, 2),
+        'tax_savings': round(max(0, tax_savings), 2),
+        'ira_after_distributions': round(ira_after_distributions, 2),
+        'taxable_acct_value': round(taxable_acct_value, 2),
+        'roth_value': round(roth_value, 2),
+        'rmd_schedule': rmd_data,
+    })
+
+
+@app.route('/api/tax-bill-lead', methods=['POST'])
+def api_tax_bill_lead():
+    """Capture lead from tax bill funnel and generate/send PDF report.
+    Accepts: {first_name, last_name, email, phone, ira_balance, tax_rate, age, filing, growth_rate?}
+    """
+    data = request.json
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
+    email = data.get('email', '').strip()
+    phone = data.get('phone', '').strip()
+    ira_balance = float(data.get('ira_balance', 0))
+    tax_rate = float(data.get('tax_rate', 0.25))
+    age = int(data.get('age', 65))
+    filing = data.get('filing', 'MFJ')
+    growth_rate = float(data.get('growth_rate', 0.05))
+
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+
+    client_name = f"{first_name} {last_name}".strip() or 'Friend'
+
+    # Find or create client
+    client = client_db.find_or_create_client(client_name, email, phone=phone)
+    client_id = client['id']
+
+    # Calculate results
+    from report_generator import _calc_rmd_schedule
+    rmd_schedule = _calc_rmd_schedule(ira_balance, growth_rate, tax_rate, age, min(age + 30, 95))
+
+    total_taxes_current = sum(row['rmd'] * tax_rate for row in rmd_schedule)
+    total_taxes_conversion = ira_balance * tax_rate
+    years = min(age + 30, 95) - age
+    roth_value = ira_balance * (1 + growth_rate) ** years
+    tax_savings = max(0, total_taxes_current - total_taxes_conversion)
+    ira_after = rmd_schedule[-1]['remaining_ira'] if rmd_schedule else 0
+    taxable_acct = rmd_schedule[-1]['taxable_acct'] if rmd_schedule else 0
+
+    inputs_dict = {
+        'ira_balance': ira_balance,
+        'tax_rate': tax_rate,
+        'age': age,
+        'filing': filing,
+        'growth_rate': growth_rate,
+    }
+    results_dict = {
+        'total_taxes_current': total_taxes_current,
+        'total_taxes_conversion': total_taxes_conversion,
+        'tax_savings': tax_savings,
+        'ira_after_distributions': ira_after,
+        'taxable_acct_value': taxable_acct,
+        'roth_value': roth_value,
+    }
+
+    # Generate and send report in background
+    def send_report_async():
+        try:
+            from report_generator import tax_bill_report
+            report_path = tax_bill_report(client_name, client_id, inputs_dict, results_dict)
+            email_sender.send_report_email(email, client_name, 'tax-bill', report_path)
+            client_db.log_action(client_id, 'report_sent', f'Tax Bill report emailed to {email}')
+        except Exception as e:
+            client_db.log_action(client_id, 'report_send_error', str(e))
+
+    client_db.log_action(client_id, 'lead_captured', f'Tax Bill lead: {email}')
+    report_id = client_db.log_report(client_id, 'tax-bill', json.dumps(inputs_dict))
+
+    thread = threading.Thread(target=send_report_async)
+    thread.start()
+
+    return jsonify({
+        'status': 'queued',
+        'report_id': report_id,
+        'client_id': client_id,
+        'results': results_dict,
+    })
 
 
 # ─── Client Registration & Tracking Routes ───────────────────────────

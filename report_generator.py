@@ -1227,7 +1227,346 @@ def capital_gains_report(client_name, client_id, inputs_dict, results_dict):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 4. PERSONALIZED GUIDE
+# 4. TAX BILL / RETIREMENT TAX ANALYSIS REPORT
+# ═══════════════════════════════════════════════════════════════════════════
+
+# IRS Uniform Lifetime Table (for RMD calculations)
+_RMD_FACTORS = {
+    72: 27.4, 73: 26.5, 74: 25.5, 75: 24.6, 76: 23.7, 77: 22.9,
+    78: 22.0, 79: 21.1, 80: 20.2, 81: 19.4, 82: 18.5, 83: 17.7,
+    84: 16.8, 85: 16.0, 86: 15.2, 87: 14.4, 88: 13.7, 89: 12.9,
+    90: 12.2, 91: 11.5, 92: 10.8, 93: 10.1, 94:  9.5, 95:  8.9,
+    96:  8.4, 97:  7.8, 98:  7.3, 99:  6.8, 100: 6.4, 101: 6.0,
+    102: 5.6, 103: 5.3, 104: 5.0, 105: 4.7, 106: 4.4, 107: 4.1,
+    108: 3.9, 109: 3.7, 110: 3.5, 111: 3.3, 112: 3.1, 113: 2.9,
+    114: 2.8, 115: 2.6, 116: 2.5, 117: 2.4, 118: 2.3, 119: 2.2,
+    120: 2.1,
+}
+
+
+def _calc_rmd_schedule(ira_balance, growth_rate, tax_rate, start_age, end_age=95):
+    """
+    Calculate year-by-year RMD schedule for the 'current approach' scenario.
+    Returns list of dicts: {year, age, rmd_factor, rmd, after_tax_rmd, remaining_ira, taxable_acct}
+    """
+    rows = []
+    balance = ira_balance
+    taxable_acct = 0.0
+
+    for age in range(start_age, end_age + 1):
+        # Growth
+        balance = balance * (1 + growth_rate)
+
+        # RMD
+        if age >= 73:
+            factor = _RMD_FACTORS.get(age, 2.0)
+            rmd = balance / factor
+        else:
+            rmd = 0.0
+
+        # After-tax RMD (distributed and taxed)
+        after_tax_rmd = rmd * (1 - tax_rate)
+        # Taxable account grows after-tax RMDs
+        if rmd > 0:
+            taxable_acct = (taxable_acct + after_tax_rmd) * (1 + growth_rate * (1 - tax_rate * 0.5))
+        else:
+            taxable_acct = taxable_acct  # No new deposits, but growth already applied via balance
+
+        balance = max(0, balance - rmd)
+
+        rows.append({
+            'age': age,
+            'rmd_factor': _RMD_FACTORS.get(age, 0) if age >= 73 else 0,
+            'rmd': rmd,
+            'after_tax_rmd': after_tax_rmd,
+            'remaining_ira': balance,
+            'taxable_acct': taxable_acct,
+        })
+
+    return rows
+
+
+def tax_bill_report(client_name, client_id, inputs_dict, results_dict):
+    """
+    Generate a Retirement Tax Bill Analysis PDF report.
+
+    inputs: {ira_balance, tax_rate, age, filing, growth_rate}
+    results: {total_taxes_current, total_taxes_conversion, tax_savings,
+              ira_after_distributions, taxable_acct_value, roth_value}
+
+    Returns the PDF file path.
+    """
+    fname = _first_name(client_name)
+    ira_balance = inputs_dict.get('ira_balance', 500000)
+    tax_rate = inputs_dict.get('tax_rate', 0.25)
+    age = inputs_dict.get('age', 65)
+    filing = inputs_dict.get('filing', 'MFJ')
+    growth_rate = inputs_dict.get('growth_rate', 0.05)
+
+    total_taxes_current = results_dict.get('total_taxes_current', ira_balance * tax_rate)
+    total_taxes_conversion = results_dict.get('total_taxes_conversion', ira_balance * tax_rate)
+    tax_savings = results_dict.get('tax_savings', 0)
+    ira_after = results_dict.get('ira_after_distributions', 0)
+    taxable_acct = results_dict.get('taxable_acct_value', 0)
+    roth_value = results_dict.get('roth_value', 0)
+
+    filing_label = 'Married Filing Jointly' if filing == 'MFJ' else 'Single'
+
+    # Calculate RMD schedule
+    rmd_schedule = _calc_rmd_schedule(ira_balance, growth_rate, tax_rate, age, min(age + 30, 95))
+
+    # Build RMD table rows (show condensed: pre-RMD summary + key RMD years)
+    rmd_rows_html = ""
+    for row in rmd_schedule:
+        if row['rmd'] > 0 or row['age'] <= age + 2:
+            rmd_rows_html += f"""
+            <tr>
+              <td style="text-align:center; padding: 4px 8px; border-bottom: 1px solid {CREAM_DARK}; font-size: 9pt;">{row['age']}</td>
+              <td style="text-align:center; padding: 4px 8px; border-bottom: 1px solid {CREAM_DARK}; font-size: 9pt;">{row['rmd_factor'] if row['rmd_factor'] else '—'}</td>
+              <td style="text-align:right; padding: 4px 8px; border-bottom: 1px solid {CREAM_DARK}; font-size: 9pt;">{_fmt_dollar(row['rmd'])}</td>
+              <td style="text-align:right; padding: 4px 8px; border-bottom: 1px solid {CREAM_DARK}; font-size: 9pt;">{_fmt_dollar(row['after_tax_rmd'])}</td>
+              <td style="text-align:right; padding: 4px 8px; border-bottom: 1px solid {CREAM_DARK}; font-size: 9pt;">{_fmt_dollar(row['remaining_ira'])}</td>
+              <td style="text-align:right; padding: 4px 8px; border-bottom: 1px solid {CREAM_DARK}; font-size: 9pt;">{_fmt_dollar(row['taxable_acct'])}</td>
+            </tr>"""
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        {SHARED_CSS}
+        .comparison-grid {{
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          margin: 24px 0;
+        }}
+        .approach-card {{
+          background: {WHITE};
+          border-radius: 10px;
+          padding: 24px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }}
+        .approach-card.current {{ border-top: 4px solid {RED}; }}
+        .approach-card.adjusted {{ border-top: 4px solid {GREEN}; }}
+        .shock-number {{
+          font-family: 'Inter', sans-serif;
+          font-size: 42pt;
+          font-weight: 800;
+          color: {GOLD};
+          text-align: center;
+          margin: 16px 0;
+        }}
+        .data-table {{
+          width: 100%;
+          border-collapse: collapse;
+          margin: 16px 0;
+        }}
+        .data-table th {{
+          font-family: 'Inter', sans-serif;
+          font-size: 8pt;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: {GRAY_MID};
+          text-align: right;
+          padding: 6px 8px;
+          border-bottom: 2px solid {NAVY};
+        }}
+        .data-table th:first-child {{ text-align: center; }}
+        .data-table th:nth-child(2) {{ text-align: center; }}
+        .summary-row {{
+          font-weight: 700;
+          background: rgba(201,168,76,0.08);
+        }}
+        .input-tag {{
+          display: inline-block;
+          background: {CREAM};
+          border-radius: 6px;
+          padding: 4px 12px;
+          margin: 2px 4px;
+          font-size: 10pt;
+          font-family: 'Inter', sans-serif;
+        }}
+      </style>
+    </head>
+    <body>
+
+    <!-- PAGE 1: Cover -->
+    <div class="page cover-page">
+      <div style="flex: 1;"></div>
+      <div>
+        <div class="label-spread">Personalized Analysis</div>
+        <h1>{fname}'s <span class="highlight">Tax Analysis</span></h1>
+        <p style="font-size: 14pt; color: {CREAM}; line-height: 1.6; margin-top: 20px;">
+          Approaches for Qualified Accounts
+        </p>
+        <p style="font-size: 10pt; color: {GRAY_LIGHT}; margin-top: 24px;">
+          Many savers use a tax-deferred account, like a traditional IRA or 401(k), to save funds for retirement.
+          Tax-deferred accounts are funded with pre-tax dollars. These accounts accumulate funds tax-deferred,
+          meaning taxes are owed on the funds when they are distributed, not when contributed.
+        </p>
+        <p style="font-size: 10pt; color: {GRAY_LIGHT}; margin-top: 12px;">
+          With an existing qualified account, there are two potential ways to manage your account and the tax
+          status of your savings:
+        </p>
+        <div style="margin-top: 16px; padding-left: 16px; border-left: 3px solid {GOLD};">
+          <p style="font-size: 10pt; color: {CREAM};"><span class="strong" style="color: {GOLD};">Current Approach:</span> Keep the account as-is and accumulate funds tax-deferred</p>
+          <p style="font-size: 10pt; color: {CREAM}; margin-top: 6px;"><span class="strong" style="color: {GREEN_LIGHT};">Adjusted Approach:</span> Reallocate to a tax-free vehicle and accumulate funds tax-free</p>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 30px;">
+        <p style="font-size: 8pt; color: {GRAY_LIGHT};">This report is © {datetime.now().year} Summit Tax Services</p>
+      </div>
+    </div>
+
+    <!-- PAGE 2: Summary Comparison -->
+    <div class="page dark-page">
+      {_client_header_html(client_name, client_id, is_dark=True)}
+      <div style="margin-bottom: 12px;">
+        <div class="label-spread">Your Inputs</div>
+        <span class="input-tag">IRA Value: <strong>{_fmt_dollar(ira_balance)}</strong></span>
+        <span class="input-tag">Tax Rate: <strong>{_fmt_pct(tax_rate * 100)}</strong></span>
+        <span class="input-tag">Age: <strong>{age}</strong></span>
+        <span class="input-tag">Filing: <strong>{filing_label}</strong></span>
+        <span class="input-tag">Growth: <strong>{_fmt_pct(growth_rate * 100)}</strong></span>
+      </div>
+
+      <div class="label-spread">Your Potential Retirement Tax Bill</div>
+      <div class="shock-number">{_fmt_dollar(total_taxes_current)}</div>
+      <p style="text-align: center; color: {CREAM}; font-size: 9pt; margin-top: -8px; margin-bottom: 24px;">
+        Total potential taxes on your qualified account over your retirement
+      </p>
+
+      <div class="comparison-grid">
+        <div class="approach-card current">
+          <div style="font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: {RED}; margin-bottom: 12px;">Current Approach</div>
+          <p style="font-size: 9pt; color: {TEXT_MUTED}; margin-bottom: 12px;">You keep your IRA/401(k), take Required Minimum Distributions, and pay taxes on every dollar withdrawn.</p>
+          <div style="border-top: 1px solid {CREAM_DARK}; padding-top: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="font-size: 9pt; color: {TEXT_MUTED};">Total Potential Taxes</span>
+              <span style="font-family: 'Inter', sans-serif; font-weight: 700; color: {RED_BRIGHT};">{_fmt_dollar(total_taxes_current)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="font-size: 9pt; color: {TEXT_MUTED};">Remaining IRA Value</span>
+              <span style="font-family: 'Inter', sans-serif; font-weight: 600;">{_fmt_dollar(ira_after)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-size: 9pt; color: {TEXT_MUTED};">Taxable Acct. Value</span>
+              <span style="font-family: 'Inter', sans-serif; font-weight: 600;">{_fmt_dollar(taxable_acct)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="approach-card adjusted">
+          <div style="font-family: 'Inter', sans-serif; font-size: 8pt; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: {GREEN}; margin-bottom: 12px;">Adjusted Approach</div>
+          <p style="font-size: 9pt; color: {TEXT_MUTED}; margin-bottom: 12px;">You convert to a Roth IRA. Withdrawals of principal and interest are distributed tax-free. No RMDs required.</p>
+          <div style="border-top: 1px solid {CREAM_DARK}; padding-top: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="font-size: 9pt; color: {TEXT_MUTED};">Taxes on Conversion</span>
+              <span style="font-family: 'Inter', sans-serif; font-weight: 700; color: {GOLD};">{_fmt_dollar(total_taxes_conversion)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="font-size: 9pt; color: {TEXT_MUTED};">Tax-Free Roth Value</span>
+              <span style="font-family: 'Inter', sans-serif; font-weight: 600; color: {GREEN};">{_fmt_dollar(roth_value)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 2px solid {GREEN};">
+              <span style="font-size: 10pt; font-weight: 700; color: {GREEN};">Potential Tax Savings</span>
+              <span style="font-family: 'Inter', sans-serif; font-size: 14pt; font-weight: 800; color: {GREEN_LIGHT};">{_fmt_dollar(tax_savings)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {_cta_box_dark()}
+    </div>
+
+    <!-- PAGE 3: RMD Data Table -->
+    <div class="page light-page">
+      <div class="label-spread navy">Data: Qualified Account Analysis</div>
+      <h2 style="color: {NAVY}; margin-bottom: 16px;">Year-by-Year RMD Schedule</h2>
+      <p style="font-size: 9pt; color: {TEXT_MUTED}; margin-bottom: 12px;">
+        Required Minimum Distributions begin at age 73. RMD factors are based on IRS Uniform Lifetime Table.
+        Taxable account value assumes after-tax RMDs are reinvested at an equivalent after-tax rate.
+      </p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 30px;">Age</th>
+            <th style="width: 55px;">RMD Factor</th>
+            <th>RMD</th>
+            <th>After-Tax RMD</th>
+            <th>Remaining IRA</th>
+            <th>Taxable Acct.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rmd_rows_html}
+        </tbody>
+      </table>
+
+      {_cta_box_light()}
+    </div>
+
+    <!-- PAGE 4: Disclosures -->
+    <div class="page light-page">
+      <div class="label-spread navy" style="margin-bottom: 20px;">Important Disclosures</div>
+      <div style="font-size: 9pt; color: {TEXT_MUTED}; line-height: 1.7;">
+        <p style="margin-bottom: 12px;">
+          These disclosures apply to this presentation in its entirety. Determining when (or if) you should
+          convert to a Roth IRA is an individual decision based on factors such as your financial situation,
+          age, tax bracket, current assets, and alternate sources of retirement income. Your unique
+          circumstances help determine what's right for you.
+        </p>
+        <p style="margin-bottom: 12px;">
+          The information contained herein is based on our understanding of current tax law. The tax and
+          legislative information may be subject to change and different interpretations. We recommend that
+          you seek professional legal advice for applicability to your personal situation.
+        </p>
+        <p style="margin-bottom: 12px;">
+          This is not a complete list of features and benefits of a qualified account and Required Minimum
+          Distributions (RMDs) at the designated age. This information is provided for informational purposes
+          only and should not be considered investment advice for individuals or advice on withdrawing funds
+          from your qualified account.
+        </p>
+        <p style="margin-bottom: 12px;">
+          <strong>Circular 230 Disclosure:</strong> To ensure compliance with requirements imposed by the IRS,
+          we inform you that any federal income tax information in this document is not intended to (and cannot)
+          be used by anyone to avoid IRS penalties. Per the license limitations of the licensed professional
+          presenting this material, this proposal is not intended to offer or provide, and no statement
+          contained herein shall constitute tax or legal advice. See qualified professionals in these areas
+          before making any decisions about your individual situation. Your financial professional is not
+          permitted to offer, and no statement contained herein shall constitute, tax or legal advice.
+        </p>
+        <p style="margin-bottom: 12px;">
+          This hypothetical example does not consider every product or feature of tax-deferred accounts,
+          tax-free accounts, or Roth accounts and is for illustrative purposes only. It should not be deemed
+          a representation of past or future results, and is no guarantee of return or future performance.
+          Your tax bracket may be lower or higher in retirement, unlike this hypothetical example.
+        </p>
+        <p style="margin-bottom: 12px;">
+          Examples of tax-free accounts include Roth IRAs and Roth 401(k) accounts. Roth accounts use
+          post-tax dollars; withdrawals of principal and interest are distributed tax-free. Although qualified
+          withdrawals from a Roth IRA are tax-free, when converting a Traditional IRA into a Roth IRA, the
+          entire converted taxable amount is reportable as income in the year of conversion.
+        </p>
+      </div>
+      <div style="text-align: center; margin-top: 30px; padding-top: 16px; border-top: 1px solid {CREAM_DARK};">
+        <p style="font-size: 8pt; color: {GRAY_MID};">© {datetime.now().year} Summit Tax Services. All Rights Reserved.</p>
+      </div>
+    </div>
+
+    </body>
+    </html>
+    """
+
+    output_path = os.path.join(REPORTS_DIR, f'tax_bill_{client_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf')
+    return _render_pdf(html, output_path)
+
+
+# 5. PERSONALIZED GUIDE
 # ═══════════════════════════════════════════════════════════════════════════
 
 def generate_personalized_guide(client_name, client_id):
