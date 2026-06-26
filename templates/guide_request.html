@@ -411,7 +411,7 @@
                         { url: '/capital-gains?c=' + clientId, name: '💰 Capital Gains Bump Zone Calculator', desc: 'Discover your real tax rate on capital gains when Social Security is involved' },
                     ];
                     calcLinksDiv.innerHTML = calcs.map(c => 
-                        '<a href="' + c.url + '" class="calc-link">' + c.name + '<div class="calc-desc">' + c.desc + '</div></a>'
+                        '<a href="' + c.url + '" target="_blank" class="calc-link">' + c.name + '<div class="calc-desc">' + c.desc + '</div></a>'
                     ).join('');
                 } else {
                     formError.textContent = data.error || 'Something went wrong. Please try again.';
