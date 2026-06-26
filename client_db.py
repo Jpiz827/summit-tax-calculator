@@ -8,7 +8,7 @@ import random
 import string
 from datetime import datetime, timezone
 
-DB_PATH = '/home/joe/summit-calculator/clients.db'
+DB_PATH = os.environ.get('DB_PATH', os.path.join(os.path.dirname(__file__), 'clients.db'))
 
 # Characters for client IDs: uppercase alphanumeric, no ambiguous chars (O/0/I/1/L)
 ID_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
