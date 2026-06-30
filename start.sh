@@ -1,3 +1,3 @@
 #!/bin/bash
-# Railway start script - listen on fixed port 5002
-exec gunicorn wsgi:app --bind 0.0.0.0:5002
+# Railway start script - bind to Railway's assigned $PORT (fallback 5002 for local runs)
+exec gunicorn wsgi:app --bind 0.0.0.0:${PORT:-5002}

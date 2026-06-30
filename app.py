@@ -3,7 +3,7 @@ Summit Tax Services — Social Security & Tax Torpedo Calculator
 Flask web application with Plotly.js interactive charts and client tracking.
 """
 
-from flask import Flask, render_template, request, jsonify, url_for
+from flask import Flask, render_template, request, jsonify, url_for, send_from_directory
 from tax_engine import (
     calc_full_scenario, calc_ss_claiming_comparison, calc_torpedo_chart_data,
     get_fra, get_fra_display, calc_ss_benefit_at_age,
@@ -27,6 +27,12 @@ app = Flask(__name__)
 def guide_request():
     """Guide request landing page — where ads send traffic."""
     return render_template('guide_request.html')
+
+
+@app.route('/checkup')
+def checkup():
+    """Tax & Retirement Check-Up tool (self-contained static page)."""
+    return send_from_directory(app.static_folder, 'checkup.html')
 
 
 @app.route('/')

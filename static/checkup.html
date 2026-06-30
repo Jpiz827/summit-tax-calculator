@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tax &amp; Retirement Check-Up — Summit Tax Services</title>
+<style>
+  :root{
+    --navy:#17263f; --navy2:#1d3050; --cream:#f7f3ea; --gold:#c8a24a; --goldDk:#9c6f2e;
+    --coral:#d9594a; --green:#2c7a52; --green2:#2f9e6b; --ink:#23303f; --mute:#6a7686;
+    --line:#e2ddd0; --cardbg:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;background:#eef1f5;color:var(--ink);line-height:1.5;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px 60px;}
+  header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;text-align:center;padding:30px 16px 26px;}
+  header .ey{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);font-weight:700;}
+  header h1{font-family:Georgia,serif;font-size:30px;margin:8px 0 4px;font-weight:600;}
+  header p{color:#cdd4df;font-size:14px;max-width:640px;margin:0 auto;}
+  header .disc{font-size:10.5px;color:#8e9bb0;margin-top:10px;}
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:22px;margin-top:24px;align-items:start;}
+  @media(max-width:860px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--cardbg);border-radius:14px;padding:22px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .card h2{font-family:Georgia,serif;font-size:18px;color:var(--navy);margin-bottom:16px;}
+  label{display:block;font-size:12.5px;font-weight:600;color:#445; margin:14px 0 4px;}
+  label:first-of-type{margin-top:0;}
+  input,select{width:100%;padding:10px 12px;border:2px solid #e3e7ee;border-radius:8px;font-size:15px;font-family:inherit;}
+  input:focus,select:focus{outline:none;border-color:var(--gold);}
+  .hint{font-size:11px;color:var(--mute);margin-top:3px;}
+  .btn{width:100%;margin-top:20px;background:var(--gold);color:#17263f;border:none;border-radius:9px;padding:13px;font-size:15px;font-weight:700;letter-spacing:.4px;cursor:pointer;}
+  .btn:hover{background:#d4af52;}
+  #spouseRow{display:block;}
+  #spIraRow{display:block;}
+  /* results */
+  .findings h2{font-family:Georgia,serif;font-size:20px;color:var(--navy);margin-bottom:4px;}
+  .findings .sub{font-size:12.5px;color:var(--mute);margin-bottom:18px;}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+  @media(max-width:520px){.kpis{grid-template-columns:1fr;}}
+  .kpi{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fcfbf7;}
+  .kpi .k{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);font-weight:700;}
+  .kpi .v{font-family:Georgia,serif;font-size:26px;font-weight:700;color:var(--navy);margin-top:4px;}
+  .kpi .v.red{color:var(--coral);} .kpi .v.green{color:var(--green);} .kpi .v.gold{color:var(--goldDk);}
+  .kpi .note{font-size:11px;color:var(--mute);margin-top:2px;}
+  /* SS bar */
+  .ssbar-wrap{margin:6px 0 20px;}
+  .ssbar-label{font-size:11px;color:var(--mute);display:flex;justify-content:space-between;margin-bottom:5px;}
+  .ssbar{position:relative;height:30px;border-radius:6px;overflow:visible;background:linear-gradient(90deg,#2fae6b 0%,#2fae6b 50%,#efa12e 50%,#efa12e 85%,#e0533c 85%,#e0533c 100%);border:1px solid #c9c3b4;}
+  .ssbar .mk{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--navy);}
+  .ssbar .seg{position:absolute;top:0;bottom:0;left:0;background:rgba(23,38,63,.22);border-right:4px solid var(--navy);border-radius:6px 0 0 6px;}
+  .ssbar .badge{position:absolute;top:-21px;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap;}
+  .ssbar-ticks{position:relative;font-size:9.5px;color:var(--mute);height:14px;margin-top:2px;}
+  .ssbar-ticks span{position:absolute;transform:translateX(-50%);}
+  .flag{border-left:4px solid var(--gold);background:#f6f1e4;border-radius:7px;padding:12px 15px;margin:10px 0;font-size:13px;}
+  .flag.red{border-color:var(--coral);background:#fbe9e7;}
+  .flag.green{border-color:var(--green);background:#e7f3ec;}
+  .flag b{color:var(--navy);}
+  .next{margin:16px 0 4px;}
+  .next h3{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--goldDk);margin-bottom:8px;}
+  .next li{font-size:13px;margin:6px 0 6px 18px;}
+  .cta{background:var(--navy);border-radius:12px;padding:20px;text-align:center;color:#fff;margin-top:20px;}
+  .cta .h{font-family:Georgia,serif;font-size:17px;color:#fff;margin-bottom:4px;}
+  .cta p{font-size:12.5px;color:#cdd4df;margin-bottom:12px;}
+  .cta a{display:inline-block;background:var(--gold);color:#17263f;text-decoration:none;font-weight:700;padding:11px 22px;border-radius:8px;font-size:14px;}
+  .toolfoot{font-size:10.5px;color:var(--mute);margin-top:18px;line-height:1.5;}
+  .printbtn{background:none;border:1px solid var(--line);color:var(--mute);border-radius:7px;padding:7px 14px;font-size:12px;cursor:pointer;float:right;}
+  .placeholder{color:var(--mute);font-size:14px;text-align:center;padding:40px 10px;}
+  /* widow / survivor */
+  .widow{margin-top:20px;border-top:1px dashed var(--line);padding-top:16px;}
+  .widow h3{font-family:Georgia,serif;font-size:17px;color:var(--coral);margin-bottom:4px;}
+  .widow .wsub{font-size:11.5px;color:var(--mute);margin-bottom:12px;}
+  .wgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:520px){.wgrid{grid-template-columns:1fr;}}
+  .wcard{border-radius:10px;padding:14px 16px;}
+  .wcard.green{background:#e7f3ec;border:1px solid #bfe0cd;}
+  .wcard.red{background:#fbe9e7;border:1px solid #f0c8c2;}
+  .wcard .wt{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:8px;}
+  .wcard.green .wt{color:var(--green);} .wcard.red .wt{color:var(--coral);}
+  .wrow{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.05);}
+  .wrow:last-child{border-bottom:none;}
+  .wrow b{color:var(--navy);}
+  .wbanner{background:linear-gradient(135deg,var(--coral),#b5392c);color:#fff;border-radius:10px;padding:14px 16px;margin:12px 0;font-size:13px;line-height:1.55;}
+  .wbanner b{color:#fff;}
+  /* lead capture */
+  .leadcard{max-width:1080px;margin:22px auto 0;border-top:4px solid var(--gold);}
+  .leadcard h2{font-family:Georgia,serif;font-size:19px;color:var(--navy);margin:0 0 4px;}
+  .leadcard p{font-size:13px;color:#445;margin-bottom:14px;}
+  .lf-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;}
+  .lf-row>div{flex:1;min-width:200px;}
+  .lf-row label{display:block;font-size:12px;font-weight:600;color:#445;margin-bottom:4px;}
+  .lf-row input{width:100%;padding:10px 12px;border:2px solid #e3e7ee;border-radius:8px;font-size:15px;font-family:inherit;}
+  .lf-row input:focus{outline:none;border-color:var(--gold);}
+  .lf-consent{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#556;margin-bottom:14px;line-height:1.4;}
+  .lf-consent input{width:auto;flex:none;margin-top:2px;}
+  .lf-btns{display:flex;gap:12px;flex-wrap:wrap;}
+  .lf-btns .btn{width:auto;flex:1;min-width:210px;}
+  .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--gold);}
+  .lf-status{font-size:13px;margin-top:10px;min-height:18px;}
+  .lf-fine{font-size:10.5px;color:var(--mute);margin-top:14px;}
+  .teaseralarm{margin:12px 0;padding:12px 15px;border-left:4px solid var(--coral);background:#fbe9e7;border-radius:7px;font-size:13px;color:var(--navy);line-height:1.5;}
+  .locknum{filter:blur(5px);-webkit-filter:blur(5px);background:#e6e2d6;border-radius:4px;padding:0 9px;user-select:none;}
+  .unlockbox{margin:14px 0;padding:16px 18px;border:2px dashed var(--gold);border-radius:10px;background:#fdf8ec;text-align:center;font-size:13.5px;line-height:1.55;color:var(--navy);}
+  .unlockbox .lk{font-size:20px;}
+  #gatedout.locked{filter:blur(6px);-webkit-filter:blur(6px);pointer-events:none;user-select:none;opacity:.92;}
+  .gatedcard{max-width:1080px;margin:22px auto 0;}
+  .freehint{margin:14px 0 0;padding:12px 15px;border:2px dashed var(--gold);border-radius:9px;background:#fdf8ec;font-size:13px;color:var(--navy);text-align:center;line-height:1.5;}
+  .rmdline{margin:10px 0 0;padding:9px 12px;background:#f4f1e8;border-radius:7px;font-size:12.5px;color:#445;line-height:1.45;}
+  .rmdline b{color:var(--goldDk);}
+  .rmdchart{margin:18px 0;}
+  .rmdchart h3{font-family:Georgia,serif;font-size:15px;color:var(--navy);margin:0 0 2px;}
+  .rmdchart .sub{font-size:10.5px;color:var(--mute);margin-bottom:8px;}
+  .qtip{display:inline-block;margin-left:6px;width:16px;height:16px;line-height:15px;text-align:center;border-radius:50%;background:#cdd4df;color:#17263f;font-size:11px;font-weight:700;cursor:help;position:relative;vertical-align:middle;}
+  .qtip .qbox{display:none;position:absolute;right:-6px;left:auto;top:150%;width:230px;max-width:74vw;background:#17263f;color:#fff;font-size:11px;font-weight:400;line-height:1.45;padding:9px 11px;border-radius:7px;z-index:20;text-align:left;box-shadow:0 6px 16px rgba(0,0,0,.22);}
+  .qtip:hover .qbox,.qtip:focus .qbox{display:block;}
+  .qtip .qbox:before{content:'';position:absolute;bottom:100%;right:10px;border:6px solid transparent;border-bottom-color:#17263f;}
+  @media print{
+    body{background:#fff;} header{background:#17263f !important;} .inputcard,.printbtn,.cta a,.leadcard,.unlockbox{display:none !important;}
+    #gatedout.locked{display:none !important;}
+    .grid{grid-template-columns:1fr;} .card{box-shadow:none;border:1px solid #ccc;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="ey">Summit Tax Services</div>
+  <h1>Tax &amp; Retirement Check-Up</h1>
+  <p>See — on your numbers — how much of your Social Security is headed for tax, what your RMDs look like, and where you stand on Medicare/IRMAA.</p>
+  <div class="disc">Educational estimate only · 2026 federal tax / SS / IRMAA / RMD data · Not affiliated with or endorsed by the Social Security Administration, the IRS, or any government agency.</div>
+</header>
+
+<div class="wrap">
+<div class="grid">
+  <!-- INPUTS -->
+  <div class="card inputcard">
+    <h2>Your numbers</h2>
+    <label for="status">Filing status</label>
+    <select id="status">
+      <option value="Married Filing Jointly" selected>Married Filing Jointly</option>
+      <option value="Single">Single</option>
+    </select>
+
+    <label for="age">Your age</label>
+    <input id="age" type="number" value="68" min="50" max="100">
+
+    <div id="spouseRow">
+      <label for="spAge">Spouse age</label>
+      <input id="spAge" type="number" value="71" min="50" max="100">
+      <label for="spSS">Spouse annual Social Security (gross)</label>
+      <input id="spSS" class="money" inputmode="numeric" value="24,000">
+      <div class="hint">Spouse's yearly SS, before tax.</div>
+    </div>
+
+    <label for="ss">Your annual Social Security (gross)</label>
+    <input id="ss" class="money" inputmode="numeric" value="30,000">
+    <div class="hint">Your yearly SS before tax. (Spouse's is added above for couples.)</div>
+
+    <label for="other">Other annual income</label>
+    <input id="other" class="money" inputmode="numeric" value="20,000">
+    <div class="hint">Pension + wages + interest + dividends. Don’t include IRA/401(k) withdrawals — those are calculated automatically from the balance below.</div>
+
+    <label for="ira">Your Traditional IRA / 401(k) balance</label>
+    <input id="ira" class="money" inputmode="numeric" value="500,000">
+    <div class="hint">Your pre-tax accounts. We calculate your RMD from this at <b>your</b> age — you don’t enter it.</div>
+
+    <div id="spIraRow">
+      <label for="spIra">Spouse's Traditional IRA / 401(k) balance</label>
+      <input id="spIra" class="money" inputmode="numeric" value="0">
+      <div class="hint">Your spouse's pre-tax accounts (enter 0 if none). We calculate their RMD separately, at <b>their</b> age — this matters when one of you starts RMDs before the other.</div>
+    </div>
+
+    <button class="btn" onclick="run()">Run my Check-Up &rarr;</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card findings">
+    <button class="printbtn" id="printbtn" onclick="window.print()" style="display:none;">Print / Save PDF</button>
+    <h2>Your Findings Summary</h2>
+    <div class="sub" id="subline">Enter your numbers and press “Run my Check-Up.”</div>
+    <div id="out"><div class="placeholder">Your one-page findings will appear here.</div></div>
+  </div>
+</div>
+
+  <!-- ===== LEAD CAPTURE ===== -->
+  <div class="card leadcard" id="leadcard" style="display:none;">
+    <h2>Unlock your full results</h2>
+    <p>Enter your info to reveal your exact RMD, your IRMAA bracket, and your personalized next steps — and save or print them. No spam — just your results and the next step.</p>
+    <form id="leadform" onsubmit="return false;">
+      <div class="lf-row">
+        <div><label>First name</label><input id="lf_first" type="text" autocomplete="given-name"></div>
+        <div><label>Email</label><input id="lf_email" type="email" autocomplete="email"></div>
+        <div><label>Phone (optional)</label><input id="lf_phone" type="tel" autocomplete="tel"></div>
+      </div>
+      <label class="lf-consent"><input id="lf_consent" type="checkbox"> Yes — Summit Tax Services may email, text, or call me about my results. No spam; unsubscribe anytime.</label>
+      <label class="lf-consent"><input id="lf_call" type="checkbox"><span><b>Optional:</b> I’d like a free 20-minute call to walk through my numbers.</span></label>
+      <div class="lf-btns">
+        <button type="button" class="btn" onclick="submitLead()">Unlock my full results &rarr;</button>
+      </div>
+      <div id="lf_status" class="lf-status"></div>
+    </form>
+    <div id="leadthanks" style="display:none;">
+      <h3 style="color:var(--green);margin:0 0 6px;">Unlocked — your full results are shown above. ✅</h3>
+      <p style="margin:0;">I’ll also email them to you with a quick note on the best next step. Talk soon — [Your Name], Summit Tax Services.</p>
+    </div>
+    <div class="lf-fine">Educational estimate only · Not affiliated with the SSA or IRS · Your info is used only to send your results and follow up.</div>
+  </div>
+
+  <!-- ===== GATED FULL RESULTS ===== -->
+  <div class="card gatedcard" id="gatedcard" style="display:none;">
+    <div id="gatedout" class="locked"></div>
+  </div>
+</div>
+
+<script>
+/* ===== VERIFIED 2026 ENGINE (copied verbatim from RothRx_Planner_v2) ===== */
+const RMD={72:27.4,73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,85:16,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4};
+const FED_LB={'Single':[0,12401,49726,105701,201776,256226,640601],'Married Filing Jointly':[0,24801,99451,211401,403551,512451,768701]};
+const FED_R=[0.10,0.12,0.22,0.24,0.32,0.35,0.37];
+const STD={'Single':[16100,2050,75000],'Married Filing Jointly':[32200,1650,150000]};
+const OBBBA=6000;
+const IRMAA=[['Standard',0,0,0,0],['Tier 1',109001,218001,81.2,14.5],['Tier 2',137001,274001,202.9,37.4],['Tier 3',171001,342001,324.7,60.3],['Tier 4',205001,410001,406.9,83.2],['Tier 5',500001,750001,487.0,91.0]];
+function ptax(t,s){const lb=FED_LB[s];let x=0;for(let i=0;i<7;i++){const lo=lb[i],hi=i<6?lb[i+1]:Infinity;if(t>lo)x+=(Math.min(t,hi)-lo)*FED_R[i];}return x;}
+function taxSS(o,ss,s){if(ss<=0)return 0;const j=s==='Married Filing Jointly';const t1=j?32000:25000,t2=j?44000:34000;const p=o+0.5*ss;return Math.min(0.85*ss,Math.max(0,0.5*(p-t1))+Math.max(0,0.35*(p-t2)));}
+function ded2(agi,nsen,s){const[b,sen,st]=STD[s];let d=b+nsen*sen;if(nsen>0)d+=Math.max(0,nsen*OBBBA-0.06*Math.max(0,agi-st));return d;}
+function irmaaTier(m,s){const j=s==='Married Filing Jointly';let idx=0;for(let i=0;i<IRMAA.length;i++)if(m>=(j?IRMAA[i][2]:IRMAA[i][1]))idx=i;return idx;}
+
+/* ===== helpers ===== */
+function money(n){return '$'+Math.round(n).toLocaleString();}
+function pct(n){return (n*100).toFixed(0)+'%';}
+function num(id){return parseFloat(document.getElementById(id).value.replace(/[^0-9.]/g,''))||0;}
+
+/* comma masking */
+document.querySelectorAll('.money').forEach(function(inp){
+  inp.addEventListener('input',function(){
+    var pos=this.selectionStart, old=this.value;
+    var raw=old.replace(/[^0-9]/g,'');
+    var f=raw.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    this.value=f; var d=f.length-old.length; var np=pos+d; if(np<0)np=0;
+    this.setSelectionRange(np,np);
+  });
+});
+document.getElementById('status').addEventListener('change',function(){
+  var show = this.value==='Married Filing Jointly'?'block':'none';
+  document.getElementById('spouseRow').style.display = show;
+  document.getElementById('spIraRow').style.display = show;
+});
+
+/* ===== one income scenario ===== */
+function scenario(status,nsen,otherPlusRmd,ss){
+  const o=otherPlusRmd;
+  const tss=taxSS(o,ss,status);
+  const ssPct= ss>0 ? tss/ss : 0;
+  const agi=o+tss;
+  const taxable=Math.max(0,agi-ded2(agi,nsen,status));
+  const fed=ptax(taxable,status);
+  const provisional=o+0.5*ss;
+  const magi=o+ss;                 // agi + exempt SS (verified method)
+  const tierIdx=irmaaTier(magi,status);
+  const tier=IRMAA[tierIdx];
+  return {o,tss,ssPct,agi,fed,provisional,magi,tierIdx,tierName:tier[0],
+          irmaaMo:tier[3]+tier[4], totalIncome:o+ss};
+}
+
+function run(){
+  const status=document.getElementById('status').value;
+  const j=status==='Married Filing Jointly';
+  const age=num('age'); const spAge=j?num('spAge'):0;
+  const yourSS=num('ss'); const spouseSS=j?num('spSS'):0; const ss=yourSS+spouseSS;
+  const other=num('other'); const ira=num('ira'); const spIra=j?num('spIra'):0;
+  const nsen=(age>=65?1:0)+((j&&spAge>=65)?1:0);
+  const benef=j?2:1;
+
+  // RMD start age depends on birth year (SECURE 2.0): born 1960+ -> 75, 1951-1959 -> 73, earlier -> 72.
+  // Each spouse's RMD is computed at THEIR own age & balance, then summed (honest for couples with two IRAs).
+  function rmdStartFor(a){ var by=2026-a; return by>=1960?75:(by>=1951?73:72); }
+  function curRMD(a,bal){ var st=rmdStartFor(a), d=RMD[Math.min(a,100)]; return (bal>0 && a>=st && d) ? bal/d : 0; }
+  function futRMD(a,bal){ if(bal<=0) return 0; var st=rmdStartFor(a); if(a>=st) return curRMD(a,bal); var d=RMD[st]; return d?bal/d:0; }
+  const people=[{who:'you', age:age, ira:ira, st:rmdStartFor(age)}];
+  if(j) people.push({who:'spouse', age:spAge, ira:spIra, st:rmdStartFor(spAge)});
+  const totalIra = people.reduce((s,p)=>s+p.ira,0);
+  const rmdNow   = people.reduce((s,p)=>s+curRMD(p.age,p.ira),0);   // household RMD this year (each at own age)
+  const rmdFuture= people.reduce((s,p)=>s+futRMD(p.age,p.ira),0);   // household RMD once each spouse is at their start (today's balances)
+  const rmdAnyNow= rmdNow>0;                                        // at least one spouse taking RMDs now
+  const pending  = people.filter(p=>p.ira>0 && p.age<p.st);         // who hasn't started yet
+  const beforeRMD= pending.length>0;
+  const nextStart= pending.length ? Math.min.apply(null, pending.map(p=>p.st)) : rmdStartFor(age);
+  const rmdStart = nextStart;                                       // representative start age for messaging
+
+  const now = scenario(status,nsen, other+rmdNow, ss);
+  const future = scenario(status,nsen, other+rmdFuture, ss);  // when RMDs begin
+
+  const irmaaAnnual = now.irmaaMo*12*benef;
+  const effRate = now.totalIncome>0 ? now.fed/now.totalIncome : 0;
+
+  // ---- flags ----
+  let flags='';
+  // SS torpedo
+  if(now.ssPct>=0.849){
+    flags+=`<div class="flag red"><b>Your Social Security is already taxed at the 85% maximum.</b> The "tax torpedo" is fully detonated — the opportunity now is lowering future RMDs and IRMAA, and protecting your heirs from the embedded tax bill.</div>`;
+  } else if(now.ssPct>0){
+    flags+=`<div class="flag"><b>${pct(now.ssPct)} of your Social Security is taxable</b> — and it climbs as RMDs grow. This is the sweet spot where a multi-year Roth strategy can pull your SS taxation back down.</div>`;
+  } else {
+    flags+=`<div class="flag green"><b>Right now you're below the Social Security taxation thresholds.</b> Good news — but ${beforeRMD?'once RMDs begin (age '+nextStart+')':'rising RMDs'} could push you in. The window to plan is now, before that happens.</div>`;
+  }
+  // future jump (only if not yet at RMD age and it gets worse)
+  if(beforeRMD && rmdFuture>0 && future.ssPct>now.ssPct+0.01){
+    flags+=`<div class="flag red"><b>When your RMDs begin, the picture changes.</b> ${j?'Projected household RMDs':'A projected first-year RMD'} of about ${money(rmdFuture)} would push your taxable Social Security from ${pct(now.ssPct)} today to roughly <b>${pct(future.ssPct)}</b> — and your provisional income from ${money(now.provisional)} to ${money(future.provisional)}.</div>`;
+  }
+  // IRMAA
+  if(now.tierIdx>0){
+    flags+=`<div class="flag red"><b>You're in an IRMAA surcharge bracket (${now.tierName}).</b> That's an estimated extra <b>${money(irmaaAnnual)}/yr</b> in Medicare premiums${j?' for the couple':''} — and a single large withdrawal could push you higher (2-year lookback).</div>`;
+  } else {
+    // near next threshold?
+    const nextThresh=j?IRMAA[1][2]:IRMAA[1][1];
+    if(now.magi> nextThresh-20000){
+      flags+=`<div class="flag"><b>You're close to the first IRMAA surcharge bracket.</b> One big IRA withdrawal could tip you over and raise your Medicare premiums two years later.</div>`;
+    }
+  }
+
+  // ---- widow / survivor scenario (MFJ only) ----
+  let widowHtml='';
+  if(j && ss>0){
+    const survivorSS=Math.max(yourSS,spouseSS), lostSS=Math.min(yourSS,spouseSS);
+    const surv=scenario('Single',1, other+rmdNow, survivorSS);
+    const jt=now;
+    const taxDelta=surv.fed-jt.fed;
+    const jEff=jt.totalIncome>0?jt.fed/jt.totalIncome:0;
+    const sEff=surv.totalIncome>0?surv.fed/surv.totalIncome:0;
+    widowHtml='<div class="widow"><h3>If one spouse passes &mdash; the survivor&rsquo;s tax hit</h3>'
+      +'<div class="wsub">The survivor keeps the larger Social Security check and files as Single.</div>'
+      +'<div class="wgrid">'
+      +wcard('Today &mdash; both spouses','green',[['Total income',money(jt.totalIncome)],['Social Security taxed',pct(jt.ssPct)],['Federal tax',money(jt.fed)],['Effective rate',(jEff*100).toFixed(1)+'%']])
+      +wcard('Survivor &mdash; single','red',[['Total income',money(surv.totalIncome)],['Social Security taxed',pct(surv.ssPct)],['Federal tax',money(surv.fed)],['Effective rate',(sEff*100).toFixed(1)+'%']])
+      +'</div>'
+      +'<div class="wbanner">The survivor keeps the larger check ('+money(survivorSS)+') but loses the smaller ('+money(lostSS)+'). Income drops about <b>'+money(lostSS)+'</b> &mdash; yet federal tax goes '
+      +(taxDelta>=0?'<b>UP</b> about <b>'+money(taxDelta)+'</b>. Less income, more tax — that&rsquo;s the widow&rsquo;s tax hit.':'down about <b>'+money(-taxDelta)+'</b>.')+'</div>'
+      +'<div class="flag">Why: filing Single roughly halves the standard deduction, drops the SS-taxation thresholds ($32k/$44k &rarr; $25k/$34k), and compresses the brackets. Roth dollars are tax-free and don&rsquo;t inflate the survivor&rsquo;s income &mdash; which is why protecting the survivor is one of the most overlooked, valuable moves in retirement.</div>'
+      +'</div>';
+  }
+
+  // ---- next steps ----
+  let steps=[];
+  if(now.ssPct>0 && now.ssPct<0.849) steps.push('Model a multi-year Roth conversion to pull your Social Security taxation down and keep it there.');
+  if(beforeRMD) steps.push('Map your RMD timeline now — the years before your RMDs begin (age 73, or 75 if you were born in 1960 or later) are the cheapest time to act.');
+  if(now.tierIdx>0) steps.push('Build an IRMAA-aware withdrawal plan so a single year doesn’t spike your Medicare premiums.');
+  if(now.ssPct>=0.849) steps.push('Quantify the embedded tax on your IRA and a phased plan to reduce future RMDs + protect heirs.');
+  if(j) steps.push('Protect the survivor with Roth assets — they shield against the single-filer “widow’s tax” jump.');
+  steps.push('Build your Personalized Social Security & RMD Strategy Report on your exact numbers.');
+
+  // ---- render ----
+  document.getElementById('subline').textContent =
+    `${status}${j?', household':''} · age ${age}${j?'/'+spAge:''} · prepared by Summit Tax Services`;
+
+  const ssMarker=Math.min(100,now.ssPct*100);
+  // ===== FREE card (#out): the hook + "what we'd look at next" =====
+  var free='';
+  free+='<div class="kpis"><div style="grid-column:1 / -1;">'
+      + kpi('% of your Social Security taxed', pct(now.ssPct), now.ssPct>=0.849?'red':(now.ssPct>0?'gold':'green'), money(now.tss)+' of '+money(ss))
+      + '</div></div>';
+  free+='<div class="ssbar-wrap"><div class="ssbar-label"><span>How much of your Social Security is taxable</span><span><b>'+pct(now.ssPct)+'</b><span class="qtip" tabindex="0">?<span class="qbox">A blended figure — it climbs from 0% toward the 85% maximum as your income rises. It is <b>not</b> a flat 0 / 50 / 85 bucket.</span></span></span></div>';
+  free+='<div class="ssbar"><div class="seg" style="width:'+ssMarker+'%"></div><div class="badge" style="left:'+Math.min(95,Math.max(5,ssMarker))+'%">'+pct(now.ssPct)+'</div></div>';
+  free+='<div class="ssbar-ticks"><span style="left:50%">50% zone</span><span style="left:85%">85% max</span></div></div>';
+  if(totalIra>0){
+    var rmdLine;
+    if(j){
+      if(rmdAnyNow && beforeRMD)
+        rmdLine = 'Household RMD this year: <b>~'+money(rmdNow)+'/yr</b> — we calculate each spouse’s separately, at their own age. It steps up further once the younger spouse reaches RMD age ('+nextStart+').';
+      else if(rmdAnyNow)
+        rmdLine = 'Household RMD this year: <b>~'+money(rmdNow)+'/yr</b> — we calculate each spouse’s separately, at their own age (you don’t enter it).';
+      else
+        rmdLine = 'Projected household RMDs once each of you reaches RMD age (73 or 75): <b>~'+money(rmdFuture)+'/yr</b> — calculated from each IRA separately.';
+    } else {
+      rmdLine = rmdAnyNow
+        ? 'Your RMD this year: <b>~'+money(rmdNow)+'/yr</b> — we calculate it automatically from your IRA/401(k) balance (you don’t enter it).'
+        : 'Projected first RMD at age '+nextStart+': <b>~'+money(rmdFuture)+'/yr</b> — we calculate it automatically from your IRA/401(k) balance.';
+    }
+    free+='<div class="rmdline">'+rmdLine+'</div>';
+  }
+  var alarm = beforeRMD
+    ? 'When your RMDs begin'+(j?' (each spouse at their own age)':' around age '+nextStart)+', your taxable Social Security can climb toward <span class="locknum">'+pct(future.ssPct)+'</span> &mdash; and your Medicare (IRMAA) costs can rise with it.'
+    : 'Your RMDs are taxable income that push your Social Security taxation and your Medicare (IRMAA) costs higher every year.';
+  free+='<div class="teaseralarm">⚠️ '+alarm+'</div>';
+  free+='<div class="next"><h3>What we’d look at next</h3><ul>';
+  steps.forEach(s=>free+='<li>'+s+'</li>');
+  free+='</ul></div>';
+  free+='<div class="freehint">↓ Enter your info below to <b>unlock your exact numbers</b> — your RMD, your IRMAA bracket, your year-by-year RMD chart'+(j?', and the widow/survivor impact':'')+'.</div>';
+  document.getElementById('out').innerHTML=free;
+
+  // ===== GATED card (#gatedout): exact numbers + RMD chart + flags + widow + CTA =====
+  var g='';
+  g+='<div class="kpis">'
+      + kpi('Provisional income', money(now.provisional), '', 'thresholds: '+(j?'$32k / $44k':'$25k / $34k'))
+      + kpi(rmdAnyNow?('This year’s RMD'+(j?' (household)':'')):'Projected first RMD', money(rmdAnyNow?rmdNow:rmdFuture), 'gold', rmdAnyNow?'taxable, grows yearly':'on today’s balance')
+      + kpi('Medicare / IRMAA', now.tierName, now.tierIdx>0?'red':'green', now.tierIdx>0?('~'+money(irmaaAnnual)+'/yr surcharge'):'no surcharge')
+      + '</div>';
+  g+=rmdChart(people, 0.05, j);
+  g+=flags;
+  g+=widowHtml;
+  g+='<div class="cta"><div class="h">Want this on your real, complete numbers?</div>'
+      +'<p>This is a quick estimate. Your free Tax &amp; Retirement Check-Up turns it into a plan.</p>'
+      +'<a href="https://summittaxpro.com/maxss" target="_blank">Book your free Check-Up &rarr;</a></div>';
+  g+='<div class="toolfoot">Estimate based on 2026 federal tax, Social Security taxation, IRMAA, and RMD (Uniform Lifetime Table) rules, '
+      +'using the figures you entered. Each spouse’s RMD is computed separately at their own age; the chart assumes ~5%/yr growth on the balance(s) you entered. Simplifies some items (state tax, tax-exempt interest, the 2-year IRMAA lag; the survivor view assumes other income and withdrawals continue) '
+      +'and is for education only — not tax, legal, or investment advice. Summit Tax Services is not affiliated with or endorsed by the SSA, the IRS, or any government agency. © 2026 Summit Tax Services.</div>';
+  document.getElementById('gatedout').innerHTML=g;
+
+  // expose findings for the lead form
+  window.__lead = {
+    status: status + (j?' (couple)':''),
+    age: age + (j?' / '+spAge:''),
+    ssTaxedPct: pct(now.ssPct),
+    provisional: money(now.provisional),
+    projRMD: money(rmdAnyNow?rmdNow:rmdFuture) + (beforeRMD?(' (first RMD ~age '+nextStart+')'):' (this year)'),
+    irmaa: now.tierName,
+    hot: (j || totalIra>=750000)
+  };
+  // reveal the form + gated cards; honor unlocked state across re-runs
+  var unlocked = window.__unlocked===true;
+  document.getElementById('gatedout').className = unlocked ? '' : 'locked';
+  var lc=document.getElementById('leadcard'); if(lc) lc.style.display='block';
+  var gc=document.getElementById('gatedcard'); if(gc) gc.style.display='block';
+  document.getElementById('leadform').style.display = unlocked ? 'none' : 'block';
+  document.getElementById('leadthanks').style.display = unlocked ? 'block' : 'none';
+  var pb=document.getElementById('printbtn'); if(pb) pb.style.display = unlocked ? 'inline-block' : 'none';
+}
+function kpi(k,v,cls,note){
+  return '<div class="kpi"><div class="k">'+k+'</div><div class="v '+(cls||'')+'">'+v+'</div>'+(note?'<div class="note">'+note+'</div>':'')+'</div>';
+}
+function wcard(title,cls,rows){
+  let h='<div class="wcard '+cls+'"><div class="wt">'+title+'</div>';
+  rows.forEach(r=>{h+='<div class="wrow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>';});
+  return h+'</div>';
+}
+/* ===== stepped RMD chart (illustrative, single household IRA) ===== */
+function rmdChart(people, growth, isCouple){
+  if(!people.some(function(p){return p.ira>0;})) return '';
+  var prim=people[0], endAge=90;          // x-axis = your (primary) age
+  var bals=people.map(function(p){return p.ira;}), data=[];
+  for(var ya=prim.age; ya<=endAge; ya++){
+    var k=ya-prim.age, hh=0;
+    people.forEach(function(p,i){
+      var a=p.age+k, div=RMD[Math.min(a,100)];
+      var rmd=(bals[i]>0 && a>=p.st && div) ? bals[i]/div : 0;
+      hh+=rmd; bals[i]=(bals[i]-rmd)*(1+growth);   // grow/deplete each balance independently
+    });
+    data.push({a:ya, rmd:hh});
+  }
+  while(data.length && data[0].rmd<=0) data.shift();   // trim years before any RMD begins
+  if(data.length<2) return '';
+  var startA=data[0].a;
+  var maxR=0, peak=data[0];
+  data.forEach(function(d){ if(d.rmd>maxR){maxR=d.rmd; peak=d;} });
+  var W=620,H=190,padL=10,padR=10,padB=26,padT=22,n=data.length,bw=(W-padL-padR)/n,inner=H-padB-padT,bars='';
+  data.forEach(function(d,i){
+    var bh=inner*(d.rmd/maxR), x=padL+i*bw, y=H-padB-bh;
+    bars+='<rect x="'+(x+1.5).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+(bw-3).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="2" fill="#c8a24a"></rect>';
+    if(d.a===startA||d.a===80||d.a===85||d.a===endAge)
+      bars+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-padB+13)+'" font-size="9" text-anchor="middle" fill="#6a7686">'+d.a+'</text>';
+  });
+  function lbl(d){ var i=data.indexOf(d), x=padL+i*bw+bw/2, bh=inner*(d.rmd/maxR), y=H-padB-bh-5;
+    return '<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" font-size="9" text-anchor="middle" fill="#17263f" font-weight="700">'+money(d.rmd)+'</text>'; }
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:'+W+'px" role="img" aria-label="Projected RMD by age">'+bars+lbl(data[0])+lbl(peak)+'</svg>';
+  return '<div class="rmdchart"><h3>Your '+(isCouple?'household ':'')+'RMDs climb every year</h3>'
+    +'<div class="sub">Projected required withdrawal'+(isCouple?'s — both IRAs combined, each spouse starting at their own age':'')+', by your age — illustrative, assumes ~'+Math.round(growth*100)+'%/yr growth.</div>'
+    +svg+'</div>';
+}
+/* ===== lead capture ===== */
+const LEAD_ENDPOINT='https://api.web3forms.com/submit';
+const LEAD_KEY='4b129ea2-03e4-42f6-8fb7-686e1c506a2b';   /* live Web3Forms key — leads email to Joe's inbox */
+function submitLead(){
+  var fn=document.getElementById('lf_first').value.trim();
+  var em=document.getElementById('lf_email').value.trim();
+  var ph=document.getElementById('lf_phone').value.trim();
+  var ok=document.getElementById('lf_consent').checked;
+  var wantsCall=document.getElementById('lf_call').checked;
+  var requestType=wantsCall?'deep-dive':'snapshot';
+  var st=document.getElementById('lf_status');
+  if(!fn||!em){ st.textContent='Please enter your first name and email.'; st.style.color='#c0392b'; return; }
+  if(!ok){ st.textContent='Please check the box so we can send your results.'; st.style.color='#c0392b'; return; }
+  var f=window.__lead||{};
+  var isHot=(wantsCall||f.hot);
+  var payload={ access_key:LEAD_KEY, subject:(isHot?'HOT ':'')+'Check-Up lead ('+requestType+') - '+fn, from_name:'Summit Check-Up Tool',
+    first_name:fn, email:em, phone:ph, request:requestType, wants_call:wantsCall?'YES':'no', filing:f.status, age:f.age,
+    ss_taxed:f.ssTaxedPct, provisional:f.provisional, projected_rmd:f.projRMD, irmaa_tier:f.irmaa, hot_lead:f.hot?'YES':'no' };
+  st.textContent='Sending…'; st.style.color='#6a7686';
+  function done(){
+    window.__unlocked=true;
+    document.getElementById('leadform').style.display='none';
+    document.getElementById('leadthanks').style.display='block';
+    if(wantsCall){ var lt=document.getElementById('leadthanks');
+      if(lt && !lt.querySelector('.callnote')){ var cn=document.createElement('p'); cn.className='callnote';
+        cn.style.cssText='margin:8px 0 0;font-weight:700;color:#2e7d52;';
+        cn.innerHTML='✔ Your free 20-minute call — I’ll reach out to schedule it.'; lt.appendChild(cn); } }
+    var g=document.getElementById('gatedout'); if(g) g.className='';
+    var pb=document.getElementById('printbtn'); if(pb) pb.style.display='inline-block';
+    var gc=document.getElementById('gatedcard'); if(gc) gc.scrollIntoView({behavior:'smooth'});
+  }
+  if(LEAD_KEY.indexOf('YOUR-')===0){ console.log('LEAD (demo — not sent; paste your Web3Forms key to go live):', payload); done(); return; }
+  var fd=new FormData(); Object.keys(payload).forEach(function(k){ fd.append(k, payload[k]==null?'':payload[k]); });
+  /* Web3Forms accepts the cross-origin POST, but the browser can't read its reply (CORS/Cloudflare). Unlock either way — the lead is POSTed best-effort. */
+  fetch(LEAD_ENDPOINT,{method:'POST',mode:'no-cors',body:fd}).then(function(){done();}).catch(function(){done();});
+}
+/* auto-run on load with default values */
+run();
+</script>
+</body>
+</html>
