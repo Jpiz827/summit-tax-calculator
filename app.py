@@ -3,7 +3,8 @@ Summit Tax Services — Social Security & Tax Torpedo Calculator
 Flask web application with Plotly.js interactive charts and client tracking.
 """
 
-from flask import Flask, render_template, request, jsonify, url_for, send_from_directory
+from flask import Flask, render_template, request, jsonify, url_for, send_from_directory, session, redirect
+from functools import wraps
 from tax_engine import (
     calc_full_scenario, calc_ss_claiming_comparison, calc_torpedo_chart_data,
     get_fra, get_fra_display, calc_ss_benefit_at_age,
@@ -18,9 +19,25 @@ import client_db
 import email_sender
 import report_generator
 import json
+import os
+import secrets
 import threading
+from datetime import datetime, timezone
 
 app = Flask(__name__)
+# SECRET_KEY should be set on Railway so admin sessions survive redeploys.
+# Falls back to a random per-process key so login still works if it isn't set yet.
+app.secret_key = os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(32)
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')  # must be set on Railway — no insecure default
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get('admin_ok'):
+            return redirect(url_for('admin_login', next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
 
 
 @app.route('/maxss')
@@ -414,14 +431,90 @@ def api_request_report():
     return jsonify({'status': 'queued', 'report_id': report_id, 'client_id': client_id})
 
 
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """Password gate for everything under /admin."""
+    error = None
+    if request.method == 'POST':
+        submitted = request.form.get('password', '')
+        if not ADMIN_PASSWORD:
+            error = 'Admin login is not configured yet (ADMIN_PASSWORD is not set on the server).'
+        elif secrets.compare_digest(submitted, ADMIN_PASSWORD):
+            session['admin_ok'] = True
+            session.permanent = True
+            return redirect(request.args.get('next') or url_for('admin_leads'))
+        else:
+            error = 'Incorrect password.'
+    return render_template('admin_login.html', error=error)
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_ok', None)
+    return redirect(url_for('admin_login'))
+
+
 @app.route('/admin')
+@login_required
 def admin():
-    """Admin dashboard — renders client list."""
+    """Admin dashboard — renders client list (all calculators)."""
     clients = client_db.get_dashboard_data()
     return render_template('admin.html', clients=clients)
 
 
+@app.route('/admin/leads')
+@login_required
+def admin_leads():
+    """Check-Up tool leads dashboard — status, notes, follow-up tracking."""
+    leads = client_db.get_leads_dashboard()
+    today = datetime.now(timezone.utc).date().isoformat()
+    for l in leads:
+        l['is_overdue'] = bool(l.get('next_follow_up') and l['next_follow_up'] <= today)
+    return render_template('admin_leads.html', leads=leads, statuses=client_db.LEAD_STATUSES)
+
+
+@app.route('/admin/leads/<client_id>/update', methods=['POST'])
+@login_required
+def admin_leads_update(client_id):
+    """Save status / notes / follow-up date for one lead."""
+    status = request.form.get('status', 'New')
+    notes = request.form.get('notes', '')
+    next_follow_up = request.form.get('next_follow_up', '').strip() or None
+    client_db.update_lead_status(client_id, status, notes, next_follow_up)
+    return redirect(url_for('admin_leads'))
+
+
+@app.route('/api/checkup-lead', methods=['POST'])
+def api_checkup_lead():
+    """Same-origin lead capture for the Check-Up tool — feeds the /admin/leads dashboard.
+    Fire-and-forget from the tool's side; Web3Forms still sends the instant email."""
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        first_name = (data.get('first_name') or '').strip()
+        email = (data.get('email') or '').strip()
+        if not first_name or not email:
+            return jsonify({'ok': False, 'error': 'first_name and email required'}), 400
+        client = client_db.find_or_create_client(first_name, email, data.get('phone') or None)
+        client_db.create_checkup_submission(
+            client_id=client['id'],
+            request_type=data.get('request'),
+            wants_call=(data.get('wants_call') == 'YES'),
+            hot_lead=(data.get('hot_lead') == 'YES'),
+            filing=data.get('filing'),
+            age=data.get('age'),
+            ss_taxed=data.get('ss_taxed'),
+            provisional=data.get('provisional'),
+            projected_rmd=data.get('projected_rmd'),
+            irmaa_tier=data.get('irmaa_tier'),
+        )
+        client_db.log_action(client['id'], 'checkup_submitted', data.get('request') or '')
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+
 @app.route('/api/clients')
+@login_required
 def api_clients():
     """Return JSON list of all clients with action history."""
     clients = client_db.get_all_clients()
@@ -431,6 +524,7 @@ def api_clients():
 
 
 @app.route('/api/client/<client_id>')
+@login_required
 def api_client_detail(client_id):
     """Return single client detail with full action history."""
     client = client_db.get_client(client_id)

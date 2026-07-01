@@ -494,6 +494,8 @@ function submitLead(){
     var pb=document.getElementById('printbtn'); if(pb) pb.style.display='inline-block';
     var gc=document.getElementById('gatedcard'); if(gc) gc.scrollIntoView({behavior:'smooth'});
   }
+  /* Same-origin save into the admin leads dashboard — independent of Web3Forms, best-effort, never blocks unlocking. */
+  try{ fetch('/api/checkup-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){}); }catch(e){}
   if(LEAD_KEY.indexOf('YOUR-')===0){ console.log('LEAD (demo — not sent; paste your Web3Forms key to go live):', payload); done(); return; }
   var fd=new FormData(); Object.keys(payload).forEach(function(k){ fd.append(k, payload[k]==null?'':payload[k]); });
   /* Web3Forms accepts the cross-origin POST, but the browser can't read its reply (CORS/Cloudflare). Unlock either way — the lead is POSTed best-effort. */

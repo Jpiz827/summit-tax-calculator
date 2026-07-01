@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summit Tax Services — Leads Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2c3e50; padding: 20px; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        h1 { color: #1a5276; font-size: 1.6em; }
+        .nav a { color: #1a5276; text-decoration: none; font-size: 0.9em; margin-left: 16px; }
+        .nav a:hover { text-decoration: underline; }
+        .stats { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+        .stat-card { background: #fff; border-radius: 10px; padding: 16px 20px; flex: 1; min-width: 150px;
+                     box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
+        .stat-card .number { font-size: 2em; font-weight: 700; color: #1a5276; }
+        .stat-card.hot .number { color: #c0392b; }
+        .stat-card.overdue .number { color: #d35400; }
+        .stat-card .label { font-size: 0.8em; color: #7f8c8d; margin-top: 4px; }
+        .lead-card { background: #fff; border-radius: 10px; padding: 18px 22px; margin-bottom: 14px;
+                     box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 5px solid #dfe6e9; }
+        .lead-card.hot { border-left-color: #c0392b; }
+        .lead-card.overdue { border-left-color: #d35400; background: #fff9f4; }
+        .lead-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .lead-name { font-size: 1.15em; font-weight: 700; color: #1a5276; }
+        .lead-name a { color: inherit; text-decoration: none; }
+        .lead-contact { font-size: 0.85em; color: #555; margin-top: 3px; }
+        .lead-contact a { color: #1a5276; text-decoration: none; }
+        .lead-contact a:hover { text-decoration: underline; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.72em; font-weight: 700;
+                 text-transform: uppercase; letter-spacing: 0.4px; margin-left: 6px; }
+        .badge-hot { background: #fdecea; color: #c0392b; }
+        .badge-call { background: #eaf4fc; color: #1a5276; }
+        .badge-overdue { background: #fdf0e0; color: #d35400; }
+        .numbers { display: flex; gap: 22px; flex-wrap: wrap; margin: 10px 0 14px; font-size: 0.85em; }
+        .numbers div span { display: block; color: #95a5a6; font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.3px; }
+        .numbers div b { font-size: 1.05em; color: #2c3e50; }
+        .meta { font-size: 0.78em; color: #95a5a6; margin-bottom: 12px; }
+        form.update-form { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; border-top: 1px solid #ecf0f1; padding-top: 12px; }
+        form.update-form .field { display: flex; flex-direction: column; gap: 4px; }
+        form.update-form label { font-size: 0.75em; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.3px; }
+        form.update-form select, form.update-form input[type="date"] {
+            padding: 7px 9px; border: 1px solid #dfe6e9; border-radius: 6px; font-size: 0.88em; }
+        form.update-form textarea { padding: 7px 9px; border: 1px solid #dfe6e9; border-radius: 6px; font-size: 0.88em;
+            width: 260px; min-height: 36px; font-family: inherit; resize: vertical; }
+        form.update-form button { background: #1a5276; color: #fff; border: none; border-radius: 6px;
+            padding: 9px 18px; font-size: 0.88em; font-weight: 600; cursor: pointer; }
+        form.update-form button:hover { background: #154360; }
+        .status-New { color: #7f8c8d; } .status-Contacted { color: #2980b9; } .status-Booked { color: #8e44ad; }
+        .status-Client { color: #1e8449; } .status-Lost { color: #95a5a6; }
+        .empty { text-align: center; padding: 60px; color: #95a5a6; font-style: italic; background: #fff; border-radius: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h1>Check-Up Leads</h1>
+        <div class="nav">
+            <a href="/admin">All Clients</a>
+            <a href="/">Back to Calculator</a>
+            <a href="/admin/logout">Log Out</a>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card"><div class="number">{{ leads|length }}</div><div class="label">Total Leads</div></div>
+        <div class="stat-card"><div class="number">{{ leads|selectattr('status','equalto','New')|list|length }}</div><div class="label">New</div></div>
+        <div class="stat-card hot"><div class="number">{{ leads|selectattr('hot_lead')|list|length }}</div><div class="label">Hot Leads</div></div>
+        <div class="stat-card overdue"><div class="number">{{ leads|selectattr('is_overdue')|list|length }}</div><div class="label">Overdue Follow-Ups</div></div>
+    </div>
+
+    {% if leads %}
+        {% for l in leads %}
+        <div class="lead-card {% if l.hot_lead %}hot{% endif %} {% if l.is_overdue %}overdue{% endif %}">
+            <div class="lead-top">
+                <div>
+                    <div class="lead-name">
+                        {{ l.first_name }}
+                        {% if l.hot_lead %}<span class="badge badge-hot">Hot</span>{% endif %}
+                        {% if l.wants_call %}<span class="badge badge-call">Wants Call</span>{% endif %}
+                        {% if l.is_overdue %}<span class="badge badge-overdue">Follow-up overdue</span>{% endif %}
+                    </div>
+                    <div class="lead-contact">
+                        <a href="mailto:{{ l.email }}">{{ l.email }}</a>
+                        {% if l.phone %} &middot; <a href="tel:{{ l.phone }}">{{ l.phone }}</a>{% endif %}
+                    </div>
+                </div>
+                <div class="meta">
+                    Submitted {{ l.last_submitted[:16] if l.last_submitted else '—' }}
+                    {% if l.submission_count > 1 %}&middot; {{ l.submission_count }}x{% endif %}
+                </div>
+            </div>
+
+            <div class="numbers">
+                <div><span>Filing</span><b>{{ l.filing or '—' }}</b></div>
+                <div><span>Age</span><b>{{ l.age or '—' }}</b></div>
+                <div><span>SS Taxed</span><b>{{ l.ss_taxed or '—' }}</b></div>
+                <div><span>Provisional</span><b>{{ l.provisional or '—' }}</b></div>
+                <div><span>Projected RMD</span><b>{{ l.projected_rmd or '—' }}</b></div>
+                <div><span>IRMAA</span><b>{{ l.irmaa_tier or '—' }}</b></div>
+                <div><span>Request</span><b>{{ l.request_type or '—' }}</b></div>
+            </div>
+
+            <form class="update-form" method="POST" action="/admin/leads/{{ l.client_id }}/update">
+                <div class="field">
+                    <label>Status</label>
+                    <select name="status" class="status-{{ l.status }}">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if s == l.status %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Next Follow-Up</label>
+                    <input type="date" name="next_follow_up" value="{{ l.next_follow_up or '' }}">
+                </div>
+                <div class="field" style="flex:1;">
+                    <label>Notes</label>
+                    <textarea name="notes" placeholder="Call notes, next step...">{{ l.notes }}</textarea>
+                </div>
+                <button type="submit">Save</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">No Check-Up leads yet. Once someone unlocks their results, they'll show up here.</div>
+    {% endif %}
+</div>
+</body>
+</html>
