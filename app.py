@@ -17,6 +17,7 @@ from tax_engine import (
 )
 import client_db
 import email_sender
+import email_sequence
 import report_generator
 import json
 import os
@@ -29,6 +30,7 @@ app = Flask(__name__)
 # Falls back to a random per-process key so login still works if it isn't set yet.
 app.secret_key = os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(32)
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')  # must be set on Railway — no insecure default
+CRON_SECRET = os.environ.get('CRON_SECRET')  # must be set on Railway — no insecure default
 
 
 def login_required(view):
@@ -481,7 +483,34 @@ def admin_leads_update(client_id):
     notes = request.form.get('notes', '')
     next_follow_up = request.form.get('next_follow_up', '').strip() or None
     client_db.update_lead_status(client_id, status, notes, next_follow_up)
+    # Once someone's booked, a client, or marked lost, the automated drip
+    # sequence should stop nudging them — a human conversation has taken over.
+    client_db.pause_sequence(client_id, paused=(status in ('Booked', 'Client', 'Lost')))
     return redirect(url_for('admin_leads'))
+
+
+@app.route('/cron/send-sequence-emails', methods=['POST', 'GET'])
+def cron_send_sequence_emails():
+    """Trigger the day-3/7/12/18/25/40 follow-up drip for whichever leads are
+    due. Call this once a day from an external scheduler (Railway cron job,
+    or a free service like cron-job.org) — not from inside the app process,
+    since a single gunicorn worker can restart or scale independently of any
+    in-process timer.
+    Auth: ?key=<CRON_SECRET> (or header X-Cron-Key) — not the admin password,
+    so the scheduler doesn't need an interactive login session.
+    """
+    if not CRON_SECRET:
+        return jsonify({'error': 'CRON_SECRET is not configured on the server'}), 503
+    supplied = request.args.get('key') or request.headers.get('X-Cron-Key', '')
+    if not secrets.compare_digest(supplied, CRON_SECRET):
+        return jsonify({'error': 'unauthorized'}), 401
+    result = email_sequence.send_due_sequence_emails()
+    return jsonify({
+        'sent_count': len(result['sent']),
+        'failed_count': len(result['failed']),
+        'sent': result['sent'],
+        'failed': result['failed'],
+    })
 
 
 @app.route('/api/checkup-lead', methods=['POST'])

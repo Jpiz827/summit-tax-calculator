@@ -69,6 +69,8 @@ def _init_db():
             provisional TEXT,
             projected_rmd TEXT,
             irmaa_tier TEXT,
+            score INTEGER DEFAULT 0,
+            tier TEXT DEFAULT 'Green',
             created_at DATETIME NOT NULL,
             FOREIGN KEY (client_id) REFERENCES clients(id)
         );
@@ -82,14 +84,71 @@ def _init_db():
             FOREIGN KEY (client_id) REFERENCES clients(id)
         );
 
+        CREATE TABLE IF NOT EXISTS email_sequence_state (
+            client_id TEXT PRIMARY KEY,
+            started_at DATETIME NOT NULL,
+            last_step_sent INTEGER DEFAULT 0,
+            paused INTEGER DEFAULT 0,
+            FOREIGN KEY (client_id) REFERENCES clients(id)
+        );
+
         CREATE INDEX IF NOT EXISTS idx_actions_client_id ON actions(client_id);
         CREATE INDEX IF NOT EXISTS idx_actions_created_at ON actions(created_at);
         CREATE INDEX IF NOT EXISTS idx_reports_client_id ON reports(client_id);
         CREATE INDEX IF NOT EXISTS idx_checkup_client_id ON checkup_submissions(client_id);
         CREATE INDEX IF NOT EXISTS idx_checkup_created_at ON checkup_submissions(created_at);
     """)
+    # Backfill columns for databases created before score/tier existed.
+    # SQLite has no "ADD COLUMN IF NOT EXISTS" — guard with a catch on the
+    # duplicate-column error instead.
+    for stmt in (
+        "ALTER TABLE checkup_submissions ADD COLUMN score INTEGER DEFAULT 0",
+        "ALTER TABLE checkup_submissions ADD COLUMN tier TEXT DEFAULT 'Green'",
+    ):
+        try:
+            conn.execute(stmt)
+        except sqlite3.OperationalError:
+            pass  # column already exists
     conn.commit()
     conn.close()
+
+
+TIER_GREEN, TIER_YELLOW, TIER_RED = 'Green', 'Yellow', 'Red'
+
+
+def compute_lead_score(ss_taxed, irmaa_tier, hot_lead):
+    """Derive a 0-11 risk score and a Green/Yellow/Red tier from the same
+    figures already shown on the Check-Up tool (no new inputs required).
+
+    ss_taxed: string like "42%" (or "" / None)
+    irmaa_tier: tier name string, e.g. "Standard", "Tier 1", ... (or "" / None)
+    hot_lead: truthy/falsy (couple, or IRA balance >= $750k, per checkup.html)
+    """
+    score = 0
+    try:
+        pct = float(str(ss_taxed).strip().rstrip('%')) if ss_taxed else 0
+    except ValueError:
+        pct = 0
+    if pct >= 85:
+        score += 4
+    elif pct >= 50:
+        score += 2
+    elif pct > 0:
+        score += 1
+
+    if irmaa_tier and str(irmaa_tier).strip().lower() != 'standard':
+        score += 3
+
+    if hot_lead:
+        score += 2
+
+    if score >= 6:
+        tier = TIER_RED
+    elif score >= 3:
+        tier = TIER_YELLOW
+    else:
+        tier = TIER_GREEN
+    return score, tier
 
 
 # Auto-initialize database on import
@@ -255,18 +314,27 @@ def _ensure_lead_status(conn, client_id):
 
 def create_checkup_submission(client_id, request_type, wants_call, hot_lead,
                                filing, age, ss_taxed, provisional, projected_rmd, irmaa_tier):
-    """Insert a Check-Up tool submission for a client and ensure it appears on the leads dashboard."""
+    """Insert a Check-Up tool submission for a client and ensure it appears on the leads dashboard.
+    Also computes the Score/Tier and (re)starts the email nurture sequence for this client."""
     conn = _get_conn()
     now = datetime.now(timezone.utc).isoformat()
+    score, tier = compute_lead_score(ss_taxed, irmaa_tier, hot_lead)
     conn.execute(
         """INSERT INTO checkup_submissions
            (client_id, request_type, wants_call, hot_lead, filing, age, ss_taxed,
-            provisional, projected_rmd, irmaa_tier, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            provisional, projected_rmd, irmaa_tier, score, tier, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (client_id, request_type, 1 if wants_call else 0, 1 if hot_lead else 0,
-         filing, age, ss_taxed, provisional, projected_rmd, irmaa_tier, now),
+         filing, age, ss_taxed, provisional, projected_rmd, irmaa_tier, score, tier, now),
     )
     _ensure_lead_status(conn, client_id)
+    # Start the drip sequence the first time we see this client; a repeat
+    # Check-Up submission should not reset an already-running sequence.
+    conn.execute(
+        "INSERT OR IGNORE INTO email_sequence_state (client_id, started_at, last_step_sent, paused) "
+        "VALUES (?, ?, 0, 0)",
+        (client_id, now),
+    )
     conn.commit()
     conn.close()
 
@@ -298,6 +366,7 @@ def get_leads_dashboard():
             c.id AS client_id, c.first_name, c.email, c.phone, c.created_at AS first_seen,
             latest.request_type, latest.wants_call, latest.hot_lead, latest.filing, latest.age,
             latest.ss_taxed, latest.provisional, latest.projected_rmd, latest.irmaa_tier,
+            latest.score, latest.tier,
             latest.created_at AS last_submitted,
             sub_counts.submission_count,
             COALESCE(ls.status, 'New') AS status,
@@ -315,11 +384,74 @@ def get_leads_dashboard():
         LEFT JOIN lead_status ls ON ls.client_id = c.id
         ORDER BY
             CASE WHEN ls.next_follow_up IS NOT NULL AND ls.next_follow_up <= date('now') THEN 0 ELSE 1 END,
+            CASE latest.tier WHEN 'Red' THEN 0 WHEN 'Yellow' THEN 1 ELSE 2 END,
             latest.hot_lead DESC,
             latest.created_at DESC
     """).fetchall()
     conn.close()
     return [_row_to_dict(r) for r in rows]
+
+
+# ─── Email nurture sequence ───────────────────────────────────────────
+
+def get_leads_due_for_sequence_email(sequence_days):
+    """Return [{client_id, first_name, email, next_step, days_elapsed}, ...]
+    for every client whose next unsent drip step's day-offset has arrived.
+
+    sequence_days: sorted list of day-offsets for steps 1, 2, 3, ... (step 0
+    is the instant "your result" email already sent by the Check-Up tool
+    itself, so this list starts at the first drip step).
+    """
+    conn = _get_conn()
+    rows = conn.execute("""
+        SELECT c.id AS client_id, c.first_name, c.email,
+               es.started_at, es.last_step_sent
+        FROM email_sequence_state es
+        JOIN clients c ON c.id = es.client_id
+        WHERE es.paused = 0 AND es.last_step_sent < ?
+    """, (len(sequence_days),)).fetchall()
+    conn.close()
+
+    now = datetime.now(timezone.utc)
+    due = []
+    for r in rows:
+        started = datetime.fromisoformat(r['started_at'])
+        if started.tzinfo is None:
+            started = started.replace(tzinfo=timezone.utc)
+        days_elapsed = (now - started).days
+        next_step = r['last_step_sent'] + 1  # 1-indexed into sequence_days
+        threshold = sequence_days[next_step - 1]
+        if days_elapsed >= threshold:
+            due.append({
+                'client_id': r['client_id'],
+                'first_name': r['first_name'],
+                'email': r['email'],
+                'next_step': next_step,
+                'days_elapsed': days_elapsed,
+            })
+    return due
+
+
+def mark_sequence_step_sent(client_id, step):
+    """Record that drip step N was sent for this client."""
+    conn = _get_conn()
+    conn.execute(
+        "UPDATE email_sequence_state SET last_step_sent = ? WHERE client_id = ?",
+        (step, client_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def pause_sequence(client_id, paused=True):
+    """Pause (or resume) the drip sequence — e.g. once a lead books or becomes a client."""
+    conn = _get_conn()
+    conn.execute(
+        "UPDATE email_sequence_state SET paused = ? WHERE client_id = ?",
+        (1 if paused else 0, client_id),
+    )
+    conn.commit()
+    conn.close()
 
 
 # Auto-initialize on import

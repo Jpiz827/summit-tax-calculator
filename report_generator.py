@@ -7,7 +7,6 @@ Uses HTML → WeasyPrint pipeline with Summit brand design system.
 import os
 import re
 from datetime import datetime
-from weasyprint import HTML
 
 # ─── Constants ──────────────────────────────────────────────────────────────
 REPORTS_DIR = '/home/joe/summit-calculator/reports'
@@ -539,7 +538,11 @@ def _first_name(client_name):
 
 
 def _render_pdf(html_content, output_path):
-    """Render HTML string to PDF via WeasyPrint."""
+    """Render HTML string to PDF via WeasyPrint.
+    Imported lazily so environments missing WeasyPrint's system libraries
+    (e.g. GTK on Windows) can still run the rest of the app — only PDF
+    generation itself fails, not every route that imports this module."""
+    from weasyprint import HTML
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     html_doc = HTML(string=html_content)
     html_doc.write_pdf(output_path)

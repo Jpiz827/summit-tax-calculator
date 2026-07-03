@@ -34,6 +34,9 @@
         .badge-hot { background: #fdecea; color: #c0392b; }
         .badge-call { background: #eaf4fc; color: #1a5276; }
         .badge-overdue { background: #fdf0e0; color: #d35400; }
+        .badge-tier-Red { background: #fdecea; color: #c0392b; }
+        .badge-tier-Yellow { background: #fef6e0; color: #b7791f; }
+        .badge-tier-Green { background: #eafaf1; color: #1e8449; }
         .numbers { display: flex; gap: 22px; flex-wrap: wrap; margin: 10px 0 14px; font-size: 0.85em; }
         .numbers div span { display: block; color: #95a5a6; font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.3px; }
         .numbers div b { font-size: 1.05em; color: #2c3e50; }
@@ -69,6 +72,7 @@
         <div class="stat-card"><div class="number">{{ leads|selectattr('status','equalto','New')|list|length }}</div><div class="label">New</div></div>
         <div class="stat-card hot"><div class="number">{{ leads|selectattr('hot_lead')|list|length }}</div><div class="label">Hot Leads</div></div>
         <div class="stat-card overdue"><div class="number">{{ leads|selectattr('is_overdue')|list|length }}</div><div class="label">Overdue Follow-Ups</div></div>
+        <div class="stat-card hot"><div class="number">{{ leads|selectattr('tier','equalto','Red')|list|length }}</div><div class="label">Red Tier</div></div>
     </div>
 
     {% if leads %}
@@ -78,6 +82,7 @@
                 <div>
                     <div class="lead-name">
                         {{ l.first_name }}
+                        {% if l.tier %}<span class="badge badge-tier-{{ l.tier }}">{{ l.tier }} · Score {{ l.score }}</span>{% endif %}
                         {% if l.hot_lead %}<span class="badge badge-hot">Hot</span>{% endif %}
                         {% if l.wants_call %}<span class="badge badge-call">Wants Call</span>{% endif %}
                         {% if l.is_overdue %}<span class="badge badge-overdue">Follow-up overdue</span>{% endif %}
