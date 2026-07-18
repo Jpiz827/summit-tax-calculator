@@ -1,4 +1,5 @@
 """
+# trigger redeploy: verifying /data volume persistence 2026-07-18
 Summit Tax Services — Social Security & Tax Torpedo Calculator
 Flask web application with Plotly.js interactive charts and client tracking.
 """
