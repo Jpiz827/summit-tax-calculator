@@ -514,8 +514,6 @@ function rmdChart(people, growth, isCouple){
     +svg+'</div>';
 }
 /* ===== lead capture ===== */
-const LEAD_ENDPOINT='https://api.web3forms.com/submit';
-const LEAD_KEY='4b129ea2-03e4-42f6-8fb7-686e1c506a2b';   /* live Web3Forms key — leads email to Joe's inbox */
 function submitLead(){
   var fn=document.getElementById('lf_first').value.trim();
   var em=document.getElementById('lf_email').value.trim();
@@ -527,9 +525,7 @@ function submitLead(){
   if(!fn||!em){ st.textContent='Please enter your first name and email.'; st.style.color='#c0392b'; return; }
   if(!ok){ st.textContent='Please check the box so we can send your results.'; st.style.color='#c0392b'; return; }
   var f=window.__lead||{};
-  var isHot=(wantsCall||f.hot);
-  var payload={ access_key:LEAD_KEY, subject:(isHot?'HOT ':'')+'Check-Up lead ('+requestType+') - '+fn, from_name:'Summit Check-Up Tool',
-    first_name:fn, email:em, phone:ph, request:requestType, wants_call:wantsCall?'YES':'no', filing:f.status, age:f.age,
+  var payload={ first_name:fn, email:em, phone:ph, request:requestType, wants_call:wantsCall?'YES':'no', filing:f.status, age:f.age,
     ss_taxed:f.ssTaxedPct, provisional:f.provisional, projected_rmd:f.projRMD, irmaa_tier:f.irmaa, hot_lead:f.hot?'YES':'no' };
   st.textContent='Sending…'; st.style.color='#6a7686';
   function done(){
@@ -545,12 +541,11 @@ function submitLead(){
     var pb=document.getElementById('printbtn'); if(pb) pb.style.display='inline-block';
     var gc=document.getElementById('gatedcard'); if(gc) gc.scrollIntoView({behavior:'smooth'});
   }
-  /* Same-origin save into the admin leads dashboard — independent of Web3Forms, best-effort, never blocks unlocking. */
-  try{ fetch('/api/checkup-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){}); }catch(e){}
-  if(LEAD_KEY.indexOf('YOUR-')===0){ console.log('LEAD (demo — not sent; paste your Web3Forms key to go live):', payload); done(); return; }
-  var fd=new FormData(); Object.keys(payload).forEach(function(k){ fd.append(k, payload[k]==null?'':payload[k]); });
-  /* Web3Forms accepts the cross-origin POST, but the browser can't read its reply (CORS/Cloudflare). Unlock either way — the lead is POSTed best-effort. */
-  fetch(LEAD_ENDPOINT,{method:'POST',mode:'no-cors',body:fd}).then(function(){done();}).catch(function(){done();});
+  /* Same-origin save into the admin leads dashboard — the server also fires the Web3Forms
+     email from here now, so it can't be silently blocked by a visitor's ad blocker the way
+     a direct browser-to-Web3Forms call could be. Unlock either way; never blocks the visitor. */
+  fetch('/api/checkup-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(){ done(); }).catch(function(){ done(); });
 }
 /* auto-run on load with default values */
 run();

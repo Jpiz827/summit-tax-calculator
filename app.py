@@ -1,5 +1,4 @@
 """
-# trigger redeploy: verifying /data volume persistence 2026-07-18
 Summit Tax Services — Social Security & Tax Torpedo Calculator
 Flask web application with Plotly.js interactive charts and client tracking.
 """
@@ -24,7 +23,33 @@ import json
 import os
 import secrets
 import threading
+import urllib.request
 from datetime import datetime, timezone
+
+# Web3Forms notification key — sends the instant "new lead" email to Joe's inbox.
+# Called server-side (see _notify_web3forms below) so it can't be silently
+# blocked by a visitor's ad blocker/privacy extension the way a browser-side
+# call to a third-party domain can be.
+WEB3FORMS_KEY = '4b129ea2-03e4-42f6-8fb7-686e1c506a2b'
+
+
+def _notify_web3forms(payload):
+    """Best-effort server-side Web3Forms email notification. Runs in a
+    background thread so it never adds latency to the lead-save response,
+    and never raises — a failure here must not affect the CRM save."""
+    def _send():
+        try:
+            body = json.dumps(payload).encode('utf-8')
+            req = urllib.request.Request(
+                'https://api.web3forms.com/submit',
+                data=body,
+                headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+                method='POST',
+            )
+            urllib.request.urlopen(req, timeout=10)
+        except Exception as e:
+            print(f"Web3Forms notify failed: {e}")
+    threading.Thread(target=_send, daemon=True).start()
 
 app = Flask(__name__)
 # SECRET_KEY should be set on Railway so admin sessions survive redeploys.
@@ -516,8 +541,9 @@ def cron_send_sequence_emails():
 
 @app.route('/api/checkup-lead', methods=['POST'])
 def api_checkup_lead():
-    """Same-origin lead capture for the Check-Up tool — feeds the /admin/leads dashboard.
-    Fire-and-forget from the tool's side; Web3Forms still sends the instant email."""
+    """Same-origin lead capture for the Check-Up tool — feeds the /admin/leads dashboard
+    AND triggers the instant Web3Forms email server-side (reliable — not subject to a
+    visitor's ad blocker/privacy extension the way the old browser-side call was)."""
     try:
         data = request.get_json(force=True, silent=True) or {}
         first_name = (data.get('first_name') or '').strip()
@@ -538,6 +564,24 @@ def api_checkup_lead():
             irmaa_tier=data.get('irmaa_tier'),
         )
         client_db.log_action(client['id'], 'checkup_submitted', data.get('request') or '')
+        is_hot = data.get('wants_call') == 'YES' or data.get('hot_lead') == 'YES'
+        _notify_web3forms({
+            'access_key': WEB3FORMS_KEY,
+            'subject': ('HOT ' if is_hot else '') + 'Check-Up lead (' + (data.get('request') or 'snapshot') + ') - ' + first_name,
+            'from_name': 'Summit Check-Up Tool',
+            'first_name': first_name,
+            'email': email,
+            'phone': data.get('phone') or '',
+            'request': data.get('request'),
+            'wants_call': data.get('wants_call') or 'no',
+            'filing': data.get('filing'),
+            'age': data.get('age'),
+            'ss_taxed': data.get('ss_taxed'),
+            'provisional': data.get('provisional'),
+            'projected_rmd': data.get('projected_rmd'),
+            'irmaa_tier': data.get('irmaa_tier'),
+            'hot_lead': data.get('hot_lead') or 'no',
+        })
         return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
