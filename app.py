@@ -25,6 +25,7 @@ import secrets
 import threading
 import urllib.request
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 # Web3Forms notification key — sends the instant "new lead" email to Joe's inbox.
 # Called server-side (see _notify_web3forms below) so it can't be silently
@@ -57,6 +58,25 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(32)
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')  # must be set on Railway — no insecure default
 CRON_SECRET = os.environ.get('CRON_SECRET')  # must be set on Railway — no insecure default
+
+
+@app.template_filter('central_time')
+def central_time(value):
+    """Display a stored UTC ISO timestamp in Central time (Joe's timezone).
+    Storage stays UTC everywhere else -- this only affects what's shown on screen."""
+    if not value:
+        return '—'
+    try:
+        dt = datetime.fromisoformat(value)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        local = dt.astimezone(ZoneInfo('America/Chicago'))
+        # %-d/%-I (no leading zero) are a Linux-only strftime extension -- build the
+        # no-leading-zero pieces manually so this works the same on every platform.
+        hour12 = local.strftime('%I').lstrip('0') or '12'
+        return local.strftime(f'%b {local.day}, %Y {hour12}:%M %p %Z')
+    except (ValueError, TypeError):
+        return value[:16] if isinstance(value, str) else '—'
 
 
 def login_required(view):

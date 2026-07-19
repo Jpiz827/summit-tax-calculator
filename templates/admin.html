@@ -72,7 +72,7 @@
                 <td>{{ c.first_name }}</td>
                 <td>{{ c.email }}</td>
                 <td>{{ c.phone or '—' }}</td>
-                <td>{{ c.created_at[:16] if c.created_at else '—' }}</td>
+                <td>{{ c.created_at | central_time }}</td>
                 <td><span class="badge badge-blue">{{ c.action_count }}</span></td>
                 <td><span class="badge badge-blue">{{ c.report_count }}</span></td>
                 <td>

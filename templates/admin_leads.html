@@ -93,7 +93,7 @@
                     </div>
                 </div>
                 <div class="meta">
-                    Submitted {{ l.last_submitted[:16] if l.last_submitted else '—' }}
+                    Submitted {{ l.last_submitted | central_time }}
                     {% if l.submission_count > 1 %}&middot; {{ l.submission_count }}x{% endif %}
                 </div>
             </div>
